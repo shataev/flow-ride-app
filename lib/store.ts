@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import type { TrafficEvent } from "@/lib/types";
 
+export type BottomSheetSnap = "collapsed" | "half" | "full";
+export type BottomSheetContent =
+  | "route"
+  | "event"
+  | "search"
+  | "report-hint"
+  | null;
+
 interface MapStore {
   events: TrafficEvent[];
   setEvents: (events: TrafficEvent[]) => void;
@@ -18,8 +26,15 @@ interface MapStore {
   setStartPoint: (point: { lat: number; lng: number } | null) => void;
   setEndPoint: (point: { lat: number; lng: number } | null) => void;
   routeCoordinates: [number, number][] | null;
+  routeDistance: number | null;
+  routeDuration: number | null;
   setRouteCoordinates: (coords: [number, number][] | null) => void;
+  setRouteDetails: (distance: number | null, duration: number | null) => void;
   resetRoute: () => void;
+  bottomSheetSnap: BottomSheetSnap;
+  bottomSheetContent: BottomSheetContent;
+  setBottomSheetSnap: (snap: BottomSheetSnap) => void;
+  setBottomSheetContent: (content: BottomSheetContent) => void;
 }
 
 export const useMapStore = create<MapStore>((set) => ({
@@ -41,12 +56,23 @@ export const useMapStore = create<MapStore>((set) => ({
   setStartPoint: (startPoint) => set({ startPoint }),
   setEndPoint: (endPoint) => set({ endPoint }),
   routeCoordinates: null,
+  routeDistance: null,
+  routeDuration: null,
   setRouteCoordinates: (routeCoordinates) => set({ routeCoordinates }),
+  setRouteDetails: (routeDistance, routeDuration) =>
+    set({ routeDistance, routeDuration }),
   resetRoute: () =>
     set({
       routeMode: "idle",
       startPoint: null,
       endPoint: null,
       routeCoordinates: null,
+      routeDistance: null,
+      routeDuration: null,
     }),
+  bottomSheetSnap: "collapsed",
+  // by default we subtly hint that reporting events is the primary action
+  bottomSheetContent: "report-hint",
+  setBottomSheetSnap: (bottomSheetSnap) => set({ bottomSheetSnap }),
+  setBottomSheetContent: (bottomSheetContent) => set({ bottomSheetContent }),
 }));
