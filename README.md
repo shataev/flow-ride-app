@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flow Ride — Traffic Events
 
-## Getting Started
+Full-stack geo-based traffic events app for Da Nang. Next.js (App Router), React, TypeScript, TailwindCSS, Mapbox GL JS, MongoDB (Mongoose), Mapbox Directions API.
 
-First, run the development server:
+## Run the project
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. **Copy environment file and configure**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+   Edit `.env.local` and set all required variables (see below).
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the dev server**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000).
+
+## Configure MongoDB
+
+1. Install MongoDB locally or use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (free tier).
+2. Set `MONGODB_URI` in `.env.local`:
+   - Local: `MONGODB_URI=mongodb://localhost:27017/flowride`
+   - Atlas: `MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster.xxxxx.mongodb.net/flowride?retryWrites=true&w=majority`
+
+The app uses Mongoose with a single cached connection (avoids multiple connections on hot reload).
+
+## Set Mapbox token
+
+1. Create a [Mapbox account](https://account.mapbox.com/) and get an access token.
+2. In `.env.local` set:
+   - **MAPBOX_TOKEN** — used by the server for the Directions API (`/api/route`). Can be a secret token.
+   - **NEXT_PUBLIC_MAPBOX_TOKEN** — used by the browser to render the map. Must be a public token (or the same token if you use one for both).
+
+Without `NEXT_PUBLIC_MAPBOX_TOKEN` the map page will show a setup message. Without `MAPBOX_TOKEN` route building will fail with a server error.
+
+## Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MONGODB_URI` | Yes (for events) | MongoDB connection string |
+| `MAPBOX_TOKEN` | Yes (for route) | Server-side Mapbox token for Directions API |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Yes (for map) | Client-side Mapbox token for map display |
+| `NEXT_PUBLIC_API_URL` | No | API base URL; leave empty to use same app at `/api/*` |
+
+## Pages
+
+- **/** — Map: view events, tap to report, build route, see events along route
+- **/report** — How to report an event
+- **/about** — About the app
+
+## Backend API (Route Handlers)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/health` | Health check, returns `{ "status": "ok" }` |
+| GET | `/api/events` | List events. Query: `lat`, `lng`, `radius`, `city` |
+| POST | `/api/events` | Create event. Body: `{ city?, type, lat, lng }` |
+| POST | `/api/events/[id]/confirm` | Increment event confirmations |
+| POST | `/api/route` | Get route. Body: `{ from: [lng, lat], to: [lng, lat] }` or `{ start: { lat, lng }, end: { lat, lng } }`. Returns `{ distance, duration, geometry, coordinates }` |
+
+Events expire automatically ~3 hours after creation (TTL index). Geospatial queries use MongoDB `$near` and `$maxDistance` (meters).
+
+## Project structure
+
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+app/            — routes (pages + API Route Handlers)
+  api/          — backend: health, events, events/[id]/confirm, route
+components/     — Map, EventMarker, RouteDrawer, ReportModal, EventPopup, MapControls
+lib/            — types, constants, env, store, mongodb, mapbox
+models/         — Event (Mongoose schema)
+hooks/          — useEvents, useMap
+services/       — client API: events, route
+styles/         — reserved
+```

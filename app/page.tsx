@@ -1,65 +1,102 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
+import { MapControls } from "@/components/MapControls";
+import { ReportModal } from "@/components/ReportModal";
+import { EventPopup } from "@/components/EventPopup";
+import { fetchRoute } from "@/services/route";
+import { fetchEvents } from "@/services/events";
+import { useMapStore } from "@/lib/store";
+import { EVENTS_RADIUS_M, CITY } from "@/lib/constants";
+
+const Map = dynamic(() => import("@/components/Map").then((m) => ({ default: m.Map })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-zinc-100 dark:bg-zinc-900">
+      <div className="text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">Loading map…</p>
+      </div>
+    </div>
+  ),
+});
+
+export default function MapPage() {
+  const [mapLoading, setMapLoading] = useState(true);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+
+  const startPoint = useMapStore((s) => s.startPoint);
+  const endPoint = useMapStore((s) => s.endPoint);
+  const setRouteCoordinates = useMapStore((s) => s.setRouteCoordinates);
+  const setEvents = useMapStore((s) => s.setEvents);
+
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+
+  const handleBuildRoute = useCallback(async () => {
+    if (!startPoint || !endPoint) return;
+    setRouteLoading(true);
+    try {
+      const res = await fetchRoute(startPoint, endPoint);
+      setRouteCoordinates(res.coordinates ?? []);
+      if (res.coordinates?.length) {
+        const mid = res.coordinates[Math.floor(res.coordinates.length / 2)];
+        const events = await fetchEvents(mid[1], mid[0], EVENTS_RADIUS_M, CITY);
+        setEvents(events);
+      }
+    } catch {
+      setMapError("Could not load route. Check backend.");
+    } finally {
+      setRouteLoading(false);
+    }
+  }, [startPoint, endPoint, setRouteCoordinates, setEvents]);
+
+  if (!mapboxToken) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
+        <h1 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200">
+          Flow Ride
+        </h1>
+        <p className="max-w-sm text-center text-sm text-zinc-600 dark:text-zinc-400">
+          Add <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-700">NEXT_PUBLIC_MAPBOX_TOKEN</code> to{" "}
+          <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-700">.env.local</code> to load the map.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="relative h-dvh w-full overflow-hidden">
+      <Map
+        mapboxToken={mapboxToken}
+        loading={mapLoading}
+        setLoading={setMapLoading}
+        setError={setMapError}
+      />
+      {mapLoading && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-zinc-100/80 dark:bg-zinc-900/80">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">Loading map…</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+      {mapError && (
+        <div className="absolute bottom-20 left-4 right-4 z-20 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+          {mapError}
+          <button
+            type="button"
+            onClick={() => setMapError(null)}
+            className="ml-2 font-medium underline"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Dismiss
+          </button>
         </div>
-      </main>
+      )}
+      <MapControls onBuildRoute={handleBuildRoute} routeLoading={routeLoading} />
+      <ReportModal />
+      <EventPopup />
     </div>
   );
 }
