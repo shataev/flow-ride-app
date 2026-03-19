@@ -1,6 +1,6 @@
 # Flow Ride — Traffic Events
 
-Full-stack geo-based traffic events app for Da Nang. Next.js (App Router), React, TypeScript, TailwindCSS, Mapbox GL JS, MongoDB (Mongoose), Mapbox Directions API.
+Full-stack geo-based traffic events app for Da Nang. Next.js (App Router), React, TypeScript, TailwindCSS, Mapbox GL JS, MongoDB (Mongoose), Mapbox Search (geocoding).
 
 ## Run the project
 
@@ -34,23 +34,23 @@ The app uses Mongoose with a single cached connection (avoids multiple connectio
 
 1. Create a [Mapbox account](https://account.mapbox.com/) and get an access token.
 2. In `.env.local` set:
-   - **MAPBOX_TOKEN** — used by the server for the Directions API (`/api/route`). Can be a secret token.
-   - **NEXT_PUBLIC_MAPBOX_TOKEN** — used by the browser to render the map. Must be a public token (or the same token if you use one for both).
+   - **NEXT_PUBLIC_MAPBOX_TOKEN** — used by the browser for the map and place search. Must be a public token.
+   - **MAPBOX_TOKEN** (optional) — server-side token if you use server APIs such as `/api/route` (Directions).
 
-Without `NEXT_PUBLIC_MAPBOX_TOKEN` the map page will show a setup message. Without `MAPBOX_TOKEN` route building will fail with a server error.
+Without `NEXT_PUBLIC_MAPBOX_TOKEN` the map page will show a setup message.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `MONGODB_URI` | Yes (for events) | MongoDB connection string |
-| `MAPBOX_TOKEN` | Yes (for route) | Server-side Mapbox token for Directions API |
+| `MAPBOX_TOKEN` | No | Server-side Mapbox token (e.g. Directions `/api/route`) |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | Yes (for map) | Client-side Mapbox token for map display |
 | `NEXT_PUBLIC_API_URL` | No | API base URL; leave empty to use same app at `/api/*` |
 
 ## Pages
 
-- **/** — Map: view events, tap to report, build route, see events along route
+- **/** — Map: view events, search a place or tap the map to report at that location
 - **/report** — How to report an event
 - **/about** — About the app
 
@@ -62,7 +62,7 @@ Without `NEXT_PUBLIC_MAPBOX_TOKEN` the map page will show a setup message. Witho
 | GET | `/api/events` | List events. Query: `lat`, `lng`, `radius`, `city` |
 | POST | `/api/events` | Create event. Body: `{ city?, type, lat, lng }` |
 | POST | `/api/events/[id]/confirm` | Increment event confirmations |
-| POST | `/api/route` | Get route. Body: `{ from: [lng, lat], to: [lng, lat] }` or `{ start: { lat, lng }, end: { lat, lng } }`. Returns `{ distance, duration, geometry, coordinates }` |
+| POST | `/api/route` | (Optional) Directions route; requires `MAPBOX_TOKEN`. Body: `{ start: { lat, lng }, end: { lat, lng } }` |
 
 Events expire automatically ~3 hours after creation (TTL index). Geospatial queries use MongoDB `$near` and `$maxDistance` (meters).
 
@@ -71,10 +71,10 @@ Events expire automatically ~3 hours after creation (TTL index). Geospatial quer
 ```
 app/            — routes (pages + API Route Handlers)
   api/          — backend: health, events, events/[id]/confirm, route
-components/     — Map, EventMarker, RouteDrawer, ReportModal, EventPopup, MapControls
+components/     — Map, MapView, EventMarkers, ReportModal, MapControls, …
 lib/            — types, constants, env, store, mongodb, mapbox
 models/         — Event (Mongoose schema)
 hooks/          — useEvents, useMap
-services/       — client API: events, route
+services/       — client API: events, geocoding
 styles/         — reserved
 ```

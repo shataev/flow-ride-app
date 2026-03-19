@@ -6,13 +6,14 @@ import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from "@/lib/constants";
 interface EventCardProps {
   event: TrafficEvent;
   onClose: () => void;
-  onReportOnRoute?: () => void;
+  /** Open report form at this event's coordinates */
+  onReportHere?: () => void;
 }
 
 export function EventCard({
   event,
   onClose,
-  onReportOnRoute,
+  onReportHere,
 }: EventCardProps) {
   const color = EVENT_TYPE_COLORS[event.type] ?? "#6b7280";
 
@@ -56,13 +57,13 @@ export function EventCard({
           </svg>
         </button>
       </div>
-      {onReportOnRoute && (
+      {onReportHere && (
         <button
           type="button"
-          onClick={onReportOnRoute}
+          onClick={onReportHere}
           className="mt-3 w-full rounded-xl bg-blue-600 py-3 text-sm font-medium text-white hover:bg-blue-700 active:scale-[0.98]"
         >
-          Report event on route
+          Report at this location
         </button>
       )}
     </div>

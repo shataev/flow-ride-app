@@ -10,15 +10,12 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { FloatingButton } from "@/components/ui/FloatingButton";
 import { EventCard } from "@/components/ui/EventCard";
 import { ReportModal } from "@/components/ReportModal";
-import { fetchRoute } from "@/services/route";
-import { fetchEvents } from "@/services/events";
 import {
   suggest,
   retrieve,
   type SearchSuggestion,
 } from "@/services/geocoding";
 import { useMapStore } from "@/lib/store";
-import { EVENTS_RADIUS_M, CITY } from "@/lib/constants";
 
 const MapViewDynamic = dynamic(
   () => import("@/components/map/MapView").then((m) => ({ default: m.MapView })),
@@ -36,17 +33,6 @@ const MapViewDynamic = dynamic(
     ),
   }
 );
-
-function formatDistance(m: number): string {
-  if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
-  return `${Math.round(m)} m`;
-}
-
-function formatDuration(s: number): string {
-  const min = Math.round(s / 60);
-  if (min >= 60) return `${Math.floor(min / 60)} h ${min % 60} min`;
-  return `${min} min`;
-}
 
 function uuidv4(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -67,29 +53,15 @@ function SearchBarOverlay() {
   const [open, setOpen] = useState(false);
   const [sessionToken] = useState(() => uuidv4());
 
-  const setStartPoint = useMapStore((s) => s.setStartPoint);
-  const setEndPoint = useMapStore((s) => s.setEndPoint);
-  const setRouteMode = useMapStore((s) => s.setRouteMode);
+  const openReportModal = useMapStore((s) => s.openReportModal);
   const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
   const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
 
   const onFocus = useCallback(() => {
-    const map = getMap();
-    if (map) {
-      const c = map.getCenter();
-      setStartPoint({ lat: c.lat, lng: c.lng });
-    }
-    setRouteMode("end");
     setOpen(true);
-    setBottomSheetContent("search");
+    setBottomSheetContent("location-search");
     setBottomSheetSnap("half");
-  }, [
-    getMap,
-    setStartPoint,
-    setRouteMode,
-    setBottomSheetContent,
-    setBottomSheetSnap,
-  ]);
+  }, [setBottomSheetContent, setBottomSheetSnap]);
 
   useEffect(() => {
     if (!query || query.trim().length < 2) {
@@ -124,16 +96,32 @@ function SearchBarOverlay() {
           duration: 800,
         });
       }
-      setEndPoint({
-        lat: retrieved.center.lat,
-        lng: retrieved.center.lng,
-      });
-      setRouteMode("idle");
-      setBottomSheetContent("search");
-      setBottomSheetSnap("half");
+      const addr =
+        suggestion.full_address ??
+        suggestion.place_formatted ??
+        suggestion.address ??
+        "";
+      const placeLabel = addr
+        ? `${suggestion.name}${addr !== suggestion.name ? ` — ${addr}` : ""}`
+        : suggestion.name;
+      openReportModal(
+        retrieved.center.lat,
+        retrieved.center.lng,
+        placeLabel
+      );
+      setQuery("");
+      setResults([]);
       setOpen(false);
+      setBottomSheetContent(null);
+      setBottomSheetSnap("collapsed");
     },
-    [getMap, sessionToken, setEndPoint, setRouteMode, setBottomSheetContent, setBottomSheetSnap]
+    [
+      getMap,
+      sessionToken,
+      openReportModal,
+      setBottomSheetContent,
+      setBottomSheetSnap,
+    ]
   );
 
   return (
@@ -142,7 +130,7 @@ function SearchBarOverlay() {
         value={query}
         onChange={setQuery}
         onFocus={onFocus}
-        placeholder="Where to?"
+        placeholder="Search place to report event…"
       />
       {open && (results.length > 0 || searching) && (
         <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-y-auto rounded-2xl bg-white py-1 shadow-xl ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700">
@@ -172,109 +160,17 @@ function SearchBarOverlay() {
   );
 }
 
-function SearchRoutePanel({
-  routeMode,
-  endPoint,
-  onChangeStart,
-}: {
-  routeMode: "idle" | "start" | "end";
-  endPoint: { lat: number; lng: number } | null;
-  onChangeStart: () => void;
-}) {
+function LocationSearchHintPanel() {
   return (
     <div className="space-y-3 py-2">
-      {routeMode === "start" ? (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Tap on the map to set start point.
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Tap on the map to set your destination.
-          </p>
-          <button
-            type="button"
-            onClick={onChangeStart}
-            className="rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Change start point
-          </button>
-        </>
-      )}
-      {endPoint && routeMode === "idle" && (
-        <p className="text-xs text-zinc-500">Destination set. Building route…</p>
-      )}
-    </div>
-  );
-}
-
-function RoutePanel() {
-  const { getMap } = useMapContext();
-  const routeDistance = useMapStore((s) => s.routeDistance);
-  const routeDuration = useMapStore((s) => s.routeDuration);
-  const openReportModal = useMapStore((s) => s.openReportModal);
-  const resetRoute = useMapStore((s) => s.resetRoute);
-  const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
-  const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
-
-  const handleReportOnRoute = useCallback(() => {
-    const map = getMap();
-    if (map) {
-      const c = map.getCenter();
-      openReportModal(c.lat, c.lng);
-    }
-    setBottomSheetSnap("collapsed");
-  }, [getMap, openReportModal, setBottomSheetSnap]);
-
-  return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-        Route
-      </h3>
-      <div className="flex gap-4 rounded-xl bg-zinc-100 p-4 dark:bg-zinc-800/50">
-        {routeDistance != null && (
-          <div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Distance</p>
-            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {formatDistance(routeDistance)}
-            </p>
-          </div>
-        )}
-        {routeDuration != null && (
-          <div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Duration</p>
-            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {formatDuration(routeDuration)}
-            </p>
-          </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          className="w-full rounded-xl bg-blue-600 py-3.5 text-base font-medium text-white hover:bg-blue-700 active:scale-[0.98]"
-        >
-          Start navigation
-        </button>
-        <button
-          type="button"
-          onClick={handleReportOnRoute}
-          className="w-full rounded-xl border border-zinc-300 py-3.5 text-base font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          Report event on route
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            resetRoute();
-            setBottomSheetContent(null);
-            setBottomSheetSnap("collapsed");
-          }}
-          className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-400"
-        >
-          Clear route
-        </button>
-      </div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+        Event location
+      </p>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        Type in the search field above and pick a place. The report form will
+        open with that location. You can also tap anywhere on the map to set
+        coordinates manually.
+      </p>
     </div>
   );
 }
@@ -282,73 +178,16 @@ function RoutePanel() {
 export default function MapPage() {
   const [mapLoading, setMapLoading] = useState(true);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [routeLoading, setRouteLoading] = useState(false);
 
-  const startPoint = useMapStore((s) => s.startPoint);
-  const endPoint = useMapStore((s) => s.endPoint);
-  const routeCoordinates = useMapStore((s) => s.routeCoordinates);
-  const routeDistance = useMapStore((s) => s.routeDistance);
-  const routeDuration = useMapStore((s) => s.routeDuration);
-  const setRouteCoordinates = useMapStore((s) => s.setRouteCoordinates);
-  const setRouteDetails = useMapStore((s) => s.setRouteDetails);
-  const setEvents = useMapStore((s) => s.setEvents);
-  const setRouteMode = useMapStore((s) => s.setRouteMode);
   const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
   const bottomSheetSnap = useMapStore((s) => s.bottomSheetSnap);
   const bottomSheetContent = useMapStore((s) => s.bottomSheetContent);
   const selectedEvent = useMapStore((s) => s.selectedEvent);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
   const openReportModal = useMapStore((s) => s.openReportModal);
-  const resetRoute = useMapStore((s) => s.resetRoute);
   const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
-  const routeMode = useMapStore((s) => s.routeMode);
-  const setEndPoint = useMapStore((s) => s.setEndPoint);
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
-
-  const handleBuildRoute = useCallback(async () => {
-    if (!startPoint || !endPoint) return;
-    setRouteLoading(true);
-    setMapError(null);
-    try {
-      const res = await fetchRoute(startPoint, endPoint);
-      setRouteCoordinates(res.coordinates ?? []);
-      setRouteDetails(
-        res.distance ?? null,
-        res.duration ?? null
-      );
-      setBottomSheetContent("route");
-      setBottomSheetSnap("half");
-      if (res.coordinates?.length) {
-        const mid = res.coordinates[Math.floor(res.coordinates.length / 2)];
-        const events = await fetchEvents(mid[1], mid[0], EVENTS_RADIUS_M, CITY);
-        setEvents(events);
-      }
-    } catch {
-      setMapError("Could not load route. Check backend.");
-    } finally {
-      setRouteLoading(false);
-    }
-  }, [
-    startPoint,
-    endPoint,
-    setRouteCoordinates,
-    setRouteDetails,
-    setEvents,
-    setBottomSheetContent,
-    setBottomSheetSnap,
-  ]);
-
-  useEffect(() => {
-    if (
-      startPoint &&
-      endPoint &&
-      routeCoordinates === null &&
-      !routeLoading
-    ) {
-      handleBuildRoute();
-    }
-  }, [startPoint, endPoint, routeCoordinates, routeLoading, handleBuildRoute]);
 
   const handleReportClick = useCallback(() => {
     setBottomSheetContent("report-hint");
@@ -385,24 +224,13 @@ export default function MapPage() {
           setBottomSheetContent(null);
           setBottomSheetSnap("collapsed");
         }}
-        onReportOnRoute={() => {
+        onReportHere={() => {
           openReportModal(selectedEvent.lat, selectedEvent.lng);
           setBottomSheetSnap("collapsed");
         }}
       />
-    ) : bottomSheetContent === "route" && routeCoordinates?.length ? (
-      <RoutePanel />
-    ) : bottomSheetContent === "search" ? (
-      <SearchRoutePanel
-        routeMode={routeMode}
-        endPoint={endPoint}
-        onChangeStart={() => {
-          setRouteMode("start");
-          setEndPoint(null);
-          setRouteCoordinates(null);
-          setRouteDetails(null, null);
-        }}
-      />
+    ) : bottomSheetContent === "location-search" ? (
+      <LocationSearchHintPanel />
     ) : bottomSheetContent === "report-hint" ? (
       <div className="space-y-3 py-2">
         <div>

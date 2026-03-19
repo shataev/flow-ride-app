@@ -23,15 +23,13 @@ export default function AboutPage() {
           About Flow Ride
         </h1>
         <p className="mt-4 text-zinc-600 dark:text-zinc-400">
-          Flow Ride is a geo-based traffic events app for Da Nang. View and report traffic events, 
-          build routes, and see events along your route.
+          Flow Ride is a geo-based traffic events app for Da Nang. View and report traffic events
+          on the map — search for a place or tap to set the location.
         </p>
         <h2 className="mt-8 font-semibold text-zinc-800 dark:text-zinc-200">Features</h2>
         <ul className="mt-2 list-disc list-inside space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
           <li>View traffic events on the map (checkpoints, accidents, hazards, roadblocks)</li>
-          <li>Report new events by tapping on the map</li>
-          <li>Build a route from start to destination</li>
-          <li>See events along your route</li>
+          <li>Report new events by searching for a place or tapping on the map</li>
         </ul>
         <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-500">
           MVP • Next.js, Mapbox GL JS, TailwindCSS

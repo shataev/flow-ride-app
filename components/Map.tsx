@@ -4,11 +4,9 @@ import { useRef, useEffect, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { EventMarker } from "./EventMarker";
-import { RouteDrawer } from "./RouteDrawer";
 import { useMapStore } from "@/lib/store";
 import { useEvents } from "@/hooks/useEvents";
 import { useMap } from "@/hooks/useMap";
-import { DANANG_CENTER } from "@/lib/constants";
 
 interface MapProps {
   mapboxToken: string;
@@ -35,13 +33,6 @@ export function Map({
   const setEvents = useMapStore((s) => s.setEvents);
   const openReportModal = useMapStore((s) => s.openReportModal);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
-  const routeMode = useMapStore((s) => s.routeMode);
-  const setRouteMode = useMapStore((s) => s.setRouteMode);
-  const startPoint = useMapStore((s) => s.startPoint);
-  const endPoint = useMapStore((s) => s.endPoint);
-  const setStartPoint = useMapStore((s) => s.setStartPoint);
-  const setEndPoint = useMapStore((s) => s.setEndPoint);
-  const routeCoordinates = useMapStore((s) => s.routeCoordinates);
 
   const loadEventsAtCenter = useCallback(async () => {
     const map = getMap();
@@ -69,17 +60,6 @@ export function Map({
     const onMoveEnd = () => loadEventsAtCenter();
     const onClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
-      const mode = useMapStore.getState().routeMode;
-      if (mode === "start") {
-        setStartPoint({ lat, lng });
-        setRouteMode("end");
-        return;
-      }
-      if (mode === "end") {
-        setEndPoint({ lat, lng });
-        setRouteMode("idle");
-        return;
-      }
       openReportModal(lat, lng);
     };
 
@@ -93,12 +73,11 @@ export function Map({
       map.off("click", onClick);
       destroy();
     };
-  }, [mapboxToken, openReportModal, setStartPoint, setEndPoint, setRouteMode, loadEventsAtCenter, initMap, destroy]);
+  }, [mapboxToken, openReportModal, loadEventsAtCenter, initMap, destroy]);
 
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
-      <RouteDrawer map={getMap()} coordinates={routeCoordinates} />
       {getMap() &&
         events.map((event) => (
           <EventMarker
