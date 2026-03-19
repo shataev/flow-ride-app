@@ -16,6 +16,7 @@ export function ReportModal() {
 
   const reportModalOpen = useMapStore((s) => s.reportModalOpen);
   const reportCoords = useMapStore((s) => s.reportCoords);
+  const reportPlaceLabel = useMapStore((s) => s.reportPlaceLabel);
   const closeReportModal = useMapStore((s) => s.closeReportModal);
   const addEvent = useMapStore((s) => s.addEvent);
 
@@ -56,7 +57,21 @@ export function ReportModal() {
           Report event
         </h2>
         <p className="mt-1 text-sm text-zinc-500">
-          Location: {reportCoords?.lat.toFixed(5)}, {reportCoords?.lng.toFixed(5)}
+          {reportPlaceLabel ? (
+            <>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                {reportPlaceLabel}
+              </span>
+              <span className="mt-1 block text-xs text-zinc-400">
+                {reportCoords?.lat.toFixed(5)}, {reportCoords?.lng.toFixed(5)}
+              </span>
+            </>
+          ) : (
+            <>
+              Location: {reportCoords?.lat.toFixed(5)},{" "}
+              {reportCoords?.lng.toFixed(5)}
+            </>
+          )}
         </p>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>

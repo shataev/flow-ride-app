@@ -4,8 +4,8 @@ import { useRef, useEffect, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MapContext } from "./MapContext";
-import { RouteLayer } from "./RouteLayer";
 import { EventMarkers } from "./EventMarkers";
+import { SearchPreviewMarker } from "./SearchPreviewMarker";
 import { useMapStore } from "@/lib/store";
 import { useEvents } from "@/hooks/useEvents";
 import { useMap } from "@/hooks/useMap";
@@ -30,15 +30,11 @@ export function MapView({
   const events = useMapStore((s) => s.events);
   const setEvents = useMapStore((s) => s.setEvents);
   const openReportModal = useMapStore((s) => s.openReportModal);
+  const setSearchPreview = useMapStore((s) => s.setSearchPreview);
+  const searchPreview = useMapStore((s) => s.searchPreview);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
   const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
   const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
-  const routeMode = useMapStore((s) => s.routeMode);
-  const setRouteMode = useMapStore((s) => s.setRouteMode);
-  const startPoint = useMapStore((s) => s.startPoint);
-  const setStartPoint = useMapStore((s) => s.setStartPoint);
-  const setEndPoint = useMapStore((s) => s.setEndPoint);
-  const routeCoordinates = useMapStore((s) => s.routeCoordinates);
 
   const loadEventsAtCenter = useCallback(async () => {
     const map = getMap();
@@ -64,17 +60,7 @@ export function MapView({
     const onMoveEnd = () => loadEventsAtCenter();
     const onClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
-      const mode = useMapStore.getState().routeMode;
-      if (mode === "start") {
-        setStartPoint({ lat, lng });
-        setRouteMode("end");
-        return;
-      }
-      if (mode === "end") {
-        setEndPoint({ lat, lng });
-        setRouteMode("idle");
-        return;
-      }
+      setSearchPreview(null);
       openReportModal(lat, lng);
     };
 
@@ -91,9 +77,7 @@ export function MapView({
   }, [
     mapboxToken,
     openReportModal,
-    setStartPoint,
-    setEndPoint,
-    setRouteMode,
+    setSearchPreview,
     loadEventsAtCenter,
     initMap,
     destroy,
@@ -101,23 +85,35 @@ export function MapView({
 
   const handleEventClick = useCallback(
     (event: import("@/lib/types").TrafficEvent) => {
+      setSearchPreview(null);
       setSelectedEvent(event);
       setBottomSheetContent("event");
       setBottomSheetSnap("half");
     },
-    [setSelectedEvent, setBottomSheetContent, setBottomSheetSnap]
+    [
+      setSearchPreview,
+      setSelectedEvent,
+      setBottomSheetContent,
+      setBottomSheetSnap,
+    ]
   );
 
   return (
     <MapContext.Provider value={{ getMap }}>
       <div className="relative h-full w-full">
         <div ref={containerRef} className="absolute inset-0 h-full w-full" />
-        <RouteLayer map={getMap()} coordinates={routeCoordinates} />
         <EventMarkers
           map={getMap()}
           events={events}
           onEventClick={handleEventClick}
         />
+        {searchPreview && (
+          <SearchPreviewMarker
+            map={getMap()}
+            lat={searchPreview.lat}
+            lng={searchPreview.lng}
+          />
+        )}
         <div className="pointer-events-none absolute inset-0">
           {children}
         </div>

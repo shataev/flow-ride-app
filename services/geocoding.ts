@@ -20,11 +20,10 @@ export interface GeocodingFeature {
 }
 
 function getToken(): string {
-  return (
-    process.env.NEXT_PUBLIC_MAPBOX_TOKEN ??
-    (typeof process !== "undefined" && process.env?.MAPBOX_TOKEN) ??
-    ""
-  );
+  const fromPublic = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const fromServer =
+    typeof process !== "undefined" ? process.env?.MAPBOX_TOKEN : undefined;
+  return fromPublic || fromServer || "";
 }
 
 /**
@@ -61,15 +60,18 @@ export async function suggest(
   const list = data.suggestions ?? [];
   if (!Array.isArray(list)) return [];
 
-  return list.map((s: Record<string, unknown>) => ({
-    mapbox_id: String(s.mapbox_id ?? ""),
-    name: String(s.name ?? ""),
-    address: s.address != null ? String(s.address) : undefined,
-    full_address:
-      s.full_address != null ? String(s.full_address) : undefined,
-    place_formatted:
-      s.place_formatted != null ? String(s.place_formatted) : undefined,
-  }));
+  return list.map((s) => {
+    const o = s as Record<string, unknown>;
+    return {
+      mapbox_id: String(o.mapbox_id ?? ""),
+      name: String(o.name ?? ""),
+      address: o.address != null ? String(o.address) : undefined,
+      full_address:
+        o.full_address != null ? String(o.full_address) : undefined,
+      place_formatted:
+        o.place_formatted != null ? String(o.place_formatted) : undefined,
+    };
+  });
 }
 
 /**
@@ -160,12 +162,13 @@ export async function searchPlaces(query: string): Promise<GeocodingFeature[]> {
   const list = data.features ?? [];
   if (!Array.isArray(list)) return [];
 
-  return list.map((f: Record<string, unknown>) => {
-    const center = (f.center as [number, number] | undefined) ?? [0, 0];
+  return list.map((f) => {
+    const o = f as Record<string, unknown>;
+    const center = (o.center as [number, number] | undefined) ?? [0, 0];
     return {
-      id: String(f.id ?? ""),
-      name: (f.text ?? f.place_name ?? query) as string,
-      address: (f.place_name as string) ?? undefined,
+      id: String(o.id ?? ""),
+      name: (o.text ?? o.place_name ?? query) as string,
+      address: (o.place_name as string) ?? undefined,
       center: { lng: center[0], lat: center[1] },
     };
   });
