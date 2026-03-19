@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MapContext } from "./MapContext";
 import { EventMarkers } from "./EventMarkers";
+import { SearchPreviewMarker } from "./SearchPreviewMarker";
 import { useMapStore } from "@/lib/store";
 import { useEvents } from "@/hooks/useEvents";
 import { useMap } from "@/hooks/useMap";
@@ -29,6 +30,8 @@ export function MapView({
   const events = useMapStore((s) => s.events);
   const setEvents = useMapStore((s) => s.setEvents);
   const openReportModal = useMapStore((s) => s.openReportModal);
+  const setSearchPreview = useMapStore((s) => s.setSearchPreview);
+  const searchPreview = useMapStore((s) => s.searchPreview);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
   const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
   const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
@@ -57,6 +60,7 @@ export function MapView({
     const onMoveEnd = () => loadEventsAtCenter();
     const onClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
+      setSearchPreview(null);
       openReportModal(lat, lng);
     };
 
@@ -73,6 +77,7 @@ export function MapView({
   }, [
     mapboxToken,
     openReportModal,
+    setSearchPreview,
     loadEventsAtCenter,
     initMap,
     destroy,
@@ -80,11 +85,17 @@ export function MapView({
 
   const handleEventClick = useCallback(
     (event: import("@/lib/types").TrafficEvent) => {
+      setSearchPreview(null);
       setSelectedEvent(event);
       setBottomSheetContent("event");
       setBottomSheetSnap("half");
     },
-    [setSelectedEvent, setBottomSheetContent, setBottomSheetSnap]
+    [
+      setSearchPreview,
+      setSelectedEvent,
+      setBottomSheetContent,
+      setBottomSheetSnap,
+    ]
   );
 
   return (
@@ -96,6 +107,13 @@ export function MapView({
           events={events}
           onEventClick={handleEventClick}
         />
+        {searchPreview && (
+          <SearchPreviewMarker
+            map={getMap()}
+            lat={searchPreview.lat}
+            lng={searchPreview.lng}
+          />
+        )}
         <div className="pointer-events-none absolute inset-0">
           {children}
         </div>

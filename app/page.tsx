@@ -53,7 +53,7 @@ function SearchBarOverlay() {
   const [open, setOpen] = useState(false);
   const [sessionToken] = useState(() => uuidv4());
 
-  const openReportModal = useMapStore((s) => s.openReportModal);
+  const setSearchPreview = useMapStore((s) => s.setSearchPreview);
   const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
   const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
 
@@ -104,11 +104,11 @@ function SearchBarOverlay() {
       const placeLabel = addr
         ? `${suggestion.name}${addr !== suggestion.name ? ` — ${addr}` : ""}`
         : suggestion.name;
-      openReportModal(
-        retrieved.center.lat,
-        retrieved.center.lng,
-        placeLabel
-      );
+      setSearchPreview({
+        lat: retrieved.center.lat,
+        lng: retrieved.center.lng,
+        placeLabel,
+      });
       setQuery("");
       setResults([]);
       setOpen(false);
@@ -118,7 +118,7 @@ function SearchBarOverlay() {
     [
       getMap,
       sessionToken,
-      openReportModal,
+      setSearchPreview,
       setBottomSheetContent,
       setBottomSheetSnap,
     ]
@@ -167,8 +167,12 @@ function LocationSearchHintPanel() {
         Event location
       </p>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Type in the search field above and pick a place. The report form will
-        open with that location. You can also tap anywhere on the map to set
+        Type in the search field above and pick a place — a pin will appear on
+        the map. Then tap{" "}
+        <span className="font-medium text-zinc-800 dark:text-zinc-200">
+          Report event
+        </span>{" "}
+        to open the form. You can also tap anywhere on the map to set
         coordinates manually.
       </p>
     </div>
@@ -185,14 +189,32 @@ export default function MapPage() {
   const selectedEvent = useMapStore((s) => s.selectedEvent);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
   const openReportModal = useMapStore((s) => s.openReportModal);
+  const searchPreview = useMapStore((s) => s.searchPreview);
+  const setSearchPreview = useMapStore((s) => s.setSearchPreview);
   const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
   const handleReportClick = useCallback(() => {
+    if (searchPreview) {
+      openReportModal(
+        searchPreview.lat,
+        searchPreview.lng,
+        searchPreview.placeLabel
+      );
+      setSearchPreview(null);
+      setBottomSheetSnap("collapsed");
+      return;
+    }
     setBottomSheetContent("report-hint");
     setBottomSheetSnap("half");
-  }, [setBottomSheetContent, setBottomSheetSnap]);
+  }, [
+    searchPreview,
+    openReportModal,
+    setSearchPreview,
+    setBottomSheetContent,
+    setBottomSheetSnap,
+  ]);
 
   if (!mapboxToken) {
     return (
@@ -271,6 +293,7 @@ export default function MapPage() {
           <FloatingButton
             onClick={handleReportClick}
             aria-label="Report event"
+            highlight={!!searchPreview}
             icon={
               <svg
                 className="h-5 w-5"

@@ -28,6 +28,11 @@ interface MapStore {
   bottomSheetContent: BottomSheetContent;
   setBottomSheetSnap: (snap: BottomSheetSnap) => void;
   setBottomSheetContent: (content: BottomSheetContent) => void;
+  /** After search pick: show pin + highlight Report until user confirms. */
+  searchPreview: { lat: number; lng: number; placeLabel: string } | null;
+  setSearchPreview: (
+    preview: { lat: number; lng: number; placeLabel: string } | null
+  ) => void;
 }
 
 export const useMapStore = create<MapStore>((set) => ({
@@ -56,4 +61,6 @@ export const useMapStore = create<MapStore>((set) => ({
   bottomSheetContent: "report-hint",
   setBottomSheetSnap: (bottomSheetSnap) => set({ bottomSheetSnap }),
   setBottomSheetContent: (bottomSheetContent) => set({ bottomSheetContent }),
+  searchPreview: null,
+  setSearchPreview: (searchPreview) => set({ searchPreview }),
 }));
