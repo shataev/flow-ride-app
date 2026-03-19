@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MapContext } from "./MapContext";
@@ -28,13 +28,16 @@ export function MapView({
   const { loadEvents } = useEvents();
 
   const events = useMapStore((s) => s.events);
-  const setEvents = useMapStore((s) => s.setEvents);
+  const eventTypeVisible = useMapStore((s) => s.eventTypeVisible);
   const openReportModal = useMapStore((s) => s.openReportModal);
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
   const searchPreview = useMapStore((s) => s.searchPreview);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
-  const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
-  const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
+
+  const visibleEvents = useMemo(
+    () => events.filter((e) => eventTypeVisible[e.type]),
+    [events, eventTypeVisible]
+  );
 
   const loadEventsAtCenter = useCallback(async () => {
     const map = getMap();
@@ -87,15 +90,8 @@ export function MapView({
     (event: import("@/lib/types").TrafficEvent) => {
       setSearchPreview(null);
       setSelectedEvent(event);
-      setBottomSheetContent("event");
-      setBottomSheetSnap("half");
     },
-    [
-      setSearchPreview,
-      setSelectedEvent,
-      setBottomSheetContent,
-      setBottomSheetSnap,
-    ]
+    [setSearchPreview, setSelectedEvent]
   );
 
   return (
@@ -104,7 +100,7 @@ export function MapView({
         <div ref={containerRef} className="absolute inset-0 h-full w-full" />
         <EventMarkers
           map={getMap()}
-          events={events}
+          events={visibleEvents}
           onEventClick={handleEventClick}
         />
         {searchPreview && (

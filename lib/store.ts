@@ -1,12 +1,12 @@
 import { create } from "zustand";
-import type { TrafficEvent } from "@/lib/types";
+import type { EventType, TrafficEvent } from "@/lib/types";
 
-export type BottomSheetSnap = "collapsed" | "half" | "full";
-export type BottomSheetContent =
-  | "event"
-  | "location-search"
-  | "report-hint"
-  | null;
+const defaultEventTypeVisible: Record<EventType, boolean> = {
+  checkpoint: true,
+  accident: true,
+  hazard: true,
+  roadblock: true,
+};
 
 interface MapStore {
   events: TrafficEvent[];
@@ -24,10 +24,9 @@ interface MapStore {
     placeLabel?: string | null
   ) => void;
   closeReportModal: () => void;
-  bottomSheetSnap: BottomSheetSnap;
-  bottomSheetContent: BottomSheetContent;
-  setBottomSheetSnap: (snap: BottomSheetSnap) => void;
-  setBottomSheetContent: (content: BottomSheetContent) => void;
+  /** Toggle visibility of markers by event type (legend / filter). */
+  eventTypeVisible: Record<EventType, boolean>;
+  toggleEventTypeVisible: (type: EventType) => void;
   /** After search pick: show pin + highlight Report until user confirms. */
   searchPreview: { lat: number; lng: number; placeLabel: string } | null;
   setSearchPreview: (
@@ -56,11 +55,14 @@ export const useMapStore = create<MapStore>((set) => ({
       reportCoords: null,
       reportPlaceLabel: null,
     }),
-  bottomSheetSnap: "collapsed",
-  // by default we subtly hint that reporting events is the primary action
-  bottomSheetContent: "report-hint",
-  setBottomSheetSnap: (bottomSheetSnap) => set({ bottomSheetSnap }),
-  setBottomSheetContent: (bottomSheetContent) => set({ bottomSheetContent }),
+  eventTypeVisible: { ...defaultEventTypeVisible },
+  toggleEventTypeVisible: (type) =>
+    set((s) => ({
+      eventTypeVisible: {
+        ...s.eventTypeVisible,
+        [type]: !s.eventTypeVisible[type],
+      },
+    })),
   searchPreview: null,
   setSearchPreview: (searchPreview) => set({ searchPreview }),
 }));

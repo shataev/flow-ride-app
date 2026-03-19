@@ -5,10 +5,10 @@ import dynamic from "next/dynamic";
 import { MapView } from "@/components/map/MapView";
 import { MapControls } from "@/components/map/MapControls";
 import { useMapContext } from "@/components/map/MapContext";
+import { EventTypeFilterLegend } from "@/components/map/EventTypeFilterLegend";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { BottomSheet } from "@/components/ui/BottomSheet";
 import { FloatingButton } from "@/components/ui/FloatingButton";
-import { EventCard } from "@/components/ui/EventCard";
+import { EventPopup } from "@/components/EventPopup";
 import { ReportModal } from "@/components/ReportModal";
 import {
   suggest,
@@ -54,14 +54,10 @@ function SearchBarOverlay() {
   const [sessionToken] = useState(() => uuidv4());
 
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
-  const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
-  const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
 
   const onFocus = useCallback(() => {
     setOpen(true);
-    setBottomSheetContent("location-search");
-    setBottomSheetSnap("half");
-  }, [setBottomSheetContent, setBottomSheetSnap]);
+  }, []);
 
   useEffect(() => {
     if (!query || query.trim().length < 2) {
@@ -112,16 +108,8 @@ function SearchBarOverlay() {
       setQuery("");
       setResults([]);
       setOpen(false);
-      setBottomSheetContent(null);
-      setBottomSheetSnap("collapsed");
     },
-    [
-      getMap,
-      sessionToken,
-      setSearchPreview,
-      setBottomSheetContent,
-      setBottomSheetSnap,
-    ]
+    [getMap, sessionToken, setSearchPreview]
   );
 
   return (
@@ -160,40 +148,11 @@ function SearchBarOverlay() {
   );
 }
 
-function LocationSearchHintPanel() {
-  return (
-    <div className="space-y-3 py-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-        Event location
-      </p>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Type in the search field above and pick a place — a pin will appear on
-        the map. Then tap{" "}
-        <span className="font-medium text-zinc-800 dark:text-zinc-200">
-          Report event
-        </span>{" "}
-        to open the form. You can also tap anywhere on the map to set
-        coordinates manually.
-      </p>
-    </div>
-  );
-}
-
-export default function MapPage() {
-  const [mapLoading, setMapLoading] = useState(true);
-  const [mapError, setMapError] = useState<string | null>(null);
-
-  const setBottomSheetContent = useMapStore((s) => s.setBottomSheetContent);
-  const bottomSheetSnap = useMapStore((s) => s.bottomSheetSnap);
-  const bottomSheetContent = useMapStore((s) => s.bottomSheetContent);
-  const selectedEvent = useMapStore((s) => s.selectedEvent);
-  const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
-  const openReportModal = useMapStore((s) => s.openReportModal);
+function ReportFAB() {
+  const { getMap } = useMapContext();
   const searchPreview = useMapStore((s) => s.searchPreview);
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
-  const setBottomSheetSnap = useMapStore((s) => s.setBottomSheetSnap);
-
-  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+  const openReportModal = useMapStore((s) => s.openReportModal);
 
   const handleReportClick = useCallback(() => {
     if (searchPreview) {
@@ -203,18 +162,46 @@ export default function MapPage() {
         searchPreview.placeLabel
       );
       setSearchPreview(null);
-      setBottomSheetSnap("collapsed");
       return;
     }
-    setBottomSheetContent("report-hint");
-    setBottomSheetSnap("half");
-  }, [
-    searchPreview,
-    openReportModal,
-    setSearchPreview,
-    setBottomSheetContent,
-    setBottomSheetSnap,
-  ]);
+    const map = getMap();
+    if (map) {
+      const c = map.getCenter();
+      openReportModal(c.lat, c.lng);
+    }
+  }, [searchPreview, openReportModal, setSearchPreview, getMap]);
+
+  return (
+    <div className="pointer-events-auto absolute bottom-6 right-4 z-10">
+      <FloatingButton
+        onClick={handleReportClick}
+        aria-label="Report event"
+        highlight={!!searchPreview}
+        icon={
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        }
+      />
+    </div>
+  );
+}
+
+export default function MapPage() {
+  const [mapLoading, setMapLoading] = useState(true);
+  const [mapError, setMapError] = useState<string | null>(null);
+
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
   if (!mapboxToken) {
     return (
@@ -237,40 +224,6 @@ export default function MapPage() {
     );
   }
 
-  const bottomSheetChildren =
-    bottomSheetContent === "event" && selectedEvent ? (
-      <EventCard
-        event={selectedEvent}
-        onClose={() => {
-          setSelectedEvent(null);
-          setBottomSheetContent(null);
-          setBottomSheetSnap("collapsed");
-        }}
-        onReportHere={() => {
-          openReportModal(selectedEvent.lat, selectedEvent.lng);
-          setBottomSheetSnap("collapsed");
-        }}
-      />
-    ) : bottomSheetContent === "location-search" ? (
-      <LocationSearchHintPanel />
-    ) : bottomSheetContent === "report-hint" ? (
-      <div className="space-y-3 py-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-            Report events
-          </p>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Tap anywhere on the map to add a traffic event and help other riders.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <span className="inline-flex flex-1 items-center justify-center rounded-full bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-            Tap map → choose type → send
-          </span>
-        </div>
-      </div>
-    ) : null;
-
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       <MapViewDynamic
@@ -288,38 +241,13 @@ export default function MapPage() {
           <MapControls />
         </div>
 
-        {/* Bottom-right: report */}
-        <div className="pointer-events-auto absolute bottom-24 right-4 z-10 sm:bottom-28">
-          <FloatingButton
-            onClick={handleReportClick}
-            aria-label="Report event"
-            highlight={!!searchPreview}
-            icon={
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-            }
-          />
+        {/* Bottom-left: event type legend / filter */}
+        <div className="pointer-events-auto absolute bottom-6 left-4 z-10 max-w-[calc(100vw-5.5rem)]">
+          <EventTypeFilterLegend />
         </div>
 
-        {/* Bottom: sheet */}
-        <BottomSheet
-          snap={bottomSheetSnap}
-          onSnapChange={setBottomSheetSnap}
-          className="pointer-events-auto pb-safe"
-        >
-          {bottomSheetChildren}
-        </BottomSheet>
+        {/* Bottom-right: report */}
+        <ReportFAB />
       </MapViewDynamic>
 
       {mapLoading && (
@@ -333,7 +261,7 @@ export default function MapPage() {
         </div>
       )}
       {mapError && (
-        <div className="absolute bottom-24 left-4 right-4 z-20 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        <div className="absolute bottom-24 left-4 right-4 z-20 rounded-xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 sm:bottom-6">
           {mapError}
           <button
             type="button"
@@ -344,6 +272,7 @@ export default function MapPage() {
           </button>
         </div>
       )}
+      <EventPopup />
       <ReportModal />
     </div>
   );
