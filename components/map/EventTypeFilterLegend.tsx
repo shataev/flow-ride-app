@@ -37,9 +37,6 @@ export function EventTypeFilterLegend() {
         role="group"
         aria-label="Event type filter"
       >
-        <span className="w-full text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Events
-        </span>
         <div className="flex flex-wrap gap-2">
           {EVENT_TYPES.map((type) => {
             const on = eventTypeVisible[type];
