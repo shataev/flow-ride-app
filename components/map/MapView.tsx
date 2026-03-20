@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { MapContext } from "./MapContext";
 import { EventMarkers } from "./EventMarkers";
 import { SearchPreviewMarker } from "./SearchPreviewMarker";
+import { UserLocationMarker } from "./UserLocationMarker";
 import { useMapStore } from "@/lib/store";
 import { useEvents } from "@/hooks/useEvents";
 import { useMap } from "@/hooks/useMap";
@@ -33,6 +34,7 @@ export function MapView({
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
   const searchPreview = useMapStore((s) => s.searchPreview);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
+  const userLocation = useMapStore((s) => s.userLocation);
 
   const visibleEvents = useMemo(
     () => events.filter((e) => eventTypeVisible[e.type]),
@@ -103,6 +105,13 @@ export function MapView({
           events={visibleEvents}
           onEventClick={handleEventClick}
         />
+        {userLocation && (
+          <UserLocationMarker
+            map={getMap()}
+            lat={userLocation.lat}
+            lng={userLocation.lng}
+          />
+        )}
         {searchPreview && (
           <SearchPreviewMarker
             map={getMap()}

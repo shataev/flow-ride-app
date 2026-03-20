@@ -15,7 +15,10 @@ interface EventMarkerProps {
 export function EventMarker({ event, map, onClick }: EventMarkerProps) {
   const mapboxMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const onClickRef = useRef(onClick);
-  onClickRef.current = onClick;
+
+  useEffect(() => {
+    onClickRef.current = onClick;
+  }, [onClick]);
 
   useEffect(() => {
     if (!map) return;

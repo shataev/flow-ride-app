@@ -4,10 +4,12 @@ import { useCallback, useState } from "react";
 import { useMapContext } from "./MapContext";
 import { FloatingButton } from "@/components/ui/FloatingButton";
 import { DANANG_CENTER } from "@/lib/constants";
+import { useMapStore } from "@/lib/store";
 
 export function MapControls() {
   const { getMap } = useMapContext();
   const [locating, setLocating] = useState(false);
+  const setUserLocation = useMapStore((s) => s.setUserLocation);
 
   const handleLocate = useCallback(() => {
     const map = getMap();
@@ -16,6 +18,10 @@ export function MapControls() {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          setUserLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
           map.flyTo({
             center: [pos.coords.longitude, pos.coords.latitude],
             zoom: 15,
@@ -24,15 +30,17 @@ export function MapControls() {
           setLocating(false);
         },
         () => {
+          setUserLocation(null);
           map.flyTo({ center: DANANG_CENTER, zoom: 12, duration: 600 });
           setLocating(false);
         }
       );
     } else {
+      setUserLocation(null);
       map.flyTo({ center: DANANG_CENTER, zoom: 12, duration: 600 });
       setLocating(false);
     }
-  }, [getMap]);
+  }, [getMap, setUserLocation]);
 
   const handleZoomIn = useCallback(() => {
     const map = getMap();
