@@ -1,4 +1,4 @@
-export type EventType = "checkpoint" | "accident" | "hazard" | "roadblock";
+export type EventType = "police";
 
 export interface TrafficEvent {
   id: string;

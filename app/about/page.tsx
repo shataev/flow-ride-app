@@ -28,7 +28,7 @@ export default function AboutPage() {
         </p>
         <h2 className="mt-8 font-semibold text-zinc-800 dark:text-zinc-200">Features</h2>
         <ul className="mt-2 list-disc list-inside space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-          <li>View traffic events on the map (checkpoints, accidents, hazards, roadblocks)</li>
+          <li>View police-on-the-road markers on the map</li>
           <li>Report new events by searching for a place or tapping on the map</li>
         </ul>
         <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-500">

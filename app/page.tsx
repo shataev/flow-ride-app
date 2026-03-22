@@ -5,9 +5,7 @@ import dynamic from "next/dynamic";
 import { MapView } from "@/components/map/MapView";
 import { MapControls } from "@/components/map/MapControls";
 import { useMapContext } from "@/components/map/MapContext";
-import { EventTypeFilterLegend } from "@/components/map/EventTypeFilterLegend";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { FloatingButton } from "@/components/ui/FloatingButton";
 import { EventPopup } from "@/components/EventPopup";
 import { ReportModal } from "@/components/ReportModal";
 import {
@@ -16,6 +14,10 @@ import {
   type SearchSuggestion,
 } from "@/services/geocoding";
 import { useMapStore } from "@/lib/store";
+import {
+  EVENT_TYPE_ICON_PATHS,
+  EVENT_TYPE_ICON_RENDER_SIZE,
+} from "@/lib/eventTypeIcons";
 
 const MapViewDynamic = dynamic(
   () => import("@/components/map/MapView").then((m) => ({ default: m.MapView })),
@@ -54,6 +56,7 @@ function SearchBarOverlay() {
   const [sessionToken] = useState(() => uuidv4());
 
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
+  const setMapClickPreview = useMapStore((s) => s.setMapClickPreview);
 
   const onFocus = useCallback(() => {
     setOpen(true);
@@ -100,6 +103,7 @@ function SearchBarOverlay() {
       const placeLabel = addr
         ? `${suggestion.name}${addr !== suggestion.name ? ` — ${addr}` : ""}`
         : suggestion.name;
+      setMapClickPreview(null);
       setSearchPreview({
         lat: retrieved.center.lat,
         lng: retrieved.center.lng,
@@ -109,7 +113,7 @@ function SearchBarOverlay() {
       setResults([]);
       setOpen(false);
     },
-    [getMap, sessionToken, setSearchPreview]
+    [getMap, sessionToken, setSearchPreview, setMapClickPreview]
   );
 
   return (
@@ -118,7 +122,7 @@ function SearchBarOverlay() {
         value={query}
         onChange={setQuery}
         onFocus={onFocus}
-        placeholder="Search place to report event…"
+        placeholder="Search for a place…"
       />
       {open && (results.length > 0 || searching) && (
         <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-y-auto rounded-2xl bg-white py-1 shadow-xl ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700">
@@ -148,13 +152,14 @@ function SearchBarOverlay() {
   );
 }
 
-function ReportFAB() {
-  const { getMap } = useMapContext();
+function PreviewReportActions() {
   const searchPreview = useMapStore((s) => s.searchPreview);
+  const mapClickPreview = useMapStore((s) => s.mapClickPreview);
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
+  const setMapClickPreview = useMapStore((s) => s.setMapClickPreview);
   const openReportModal = useMapStore((s) => s.openReportModal);
 
-  const handleReportClick = useCallback(() => {
+  const handleConfirm = useCallback(() => {
     if (searchPreview) {
       openReportModal(
         searchPreview.lat,
@@ -164,31 +169,67 @@ function ReportFAB() {
       setSearchPreview(null);
       return;
     }
-    const map = getMap();
-    if (map) {
-      const c = map.getCenter();
-      openReportModal(c.lat, c.lng);
+    if (mapClickPreview) {
+      openReportModal(mapClickPreview.lat, mapClickPreview.lng);
+      setMapClickPreview(null);
     }
-  }, [searchPreview, openReportModal, setSearchPreview, getMap]);
+  }, [
+    searchPreview,
+    mapClickPreview,
+    openReportModal,
+    setSearchPreview,
+    setMapClickPreview,
+  ]);
+
+  const handleCancel = useCallback(() => {
+    setSearchPreview(null);
+    setMapClickPreview(null);
+  }, [setSearchPreview, setMapClickPreview]);
+
+  const policeIconPx = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
+
+  const pixelBtnBase =
+    "h-12 w-full shrink-0 rounded-[2px] border-2 font-mono text-base shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[3px_3px_0px_rgba(0,0,0,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:shadow-[4px_4px_0px_rgba(0,0,0,0.35)] dark:active:shadow-[3px_3px_0px_rgba(0,0,0,0.35)] sm:flex-1";
+
+  if (!searchPreview && !mapClickPreview) {
+    return null;
+  }
 
   return (
-    <div className="pointer-events-auto absolute bottom-6 right-4 z-10">
-      <FloatingButton
-        onClick={handleReportClick}
-        aria-label="Report event"
-        highlight={!!searchPreview}
-        icon={
+    <div className="pointer-events-auto absolute bottom-6 left-0 right-0 z-10 flex justify-center px-4">
+      <div className="flex w-full max-w-md flex-col gap-2 sm:max-w-xl sm:flex-row sm:gap-3">
+        <button
+          type="button"
+          onClick={handleConfirm}
+          aria-label="Add at this location"
+          className={
+            pixelBtnBase +
+            " inline-flex items-center justify-center gap-1.5 border-blue-600 bg-blue-50 px-3 text-zinc-900 shadow-[4px_4px_0px_rgba(37,99,235,0.35)] hover:bg-blue-100 active:shadow-[3px_3px_0px_rgba(37,99,235,0.35)] dark:border-blue-400 dark:bg-blue-950/50 dark:text-zinc-100 dark:shadow-[4px_4px_0px_rgba(59,130,246,0.35)] dark:hover:bg-blue-950/70 dark:active:shadow-[3px_3px_0px_rgba(59,130,246,0.35)]"
+          }
+        >
+          <span className="whitespace-nowrap">Add</span>
           <img
-            src="/icons/png/add-event-alert.png"
+            src={EVENT_TYPE_ICON_PATHS.police}
             alt=""
             aria-hidden
-            width={32}
-            height={32}
-            style={{ imageRendering: "pixelated" }}
-            className="h-8 w-8"
+            width="27"
+            height={policeIconPx}
+            style={{ imageRendering: "pixelated", transform: "translateY(-3px)" }}
+            className="shrink-0"
           />
-        }
-      />
+          <span className="whitespace-nowrap">here</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className={
+            pixelBtnBase +
+            " border-zinc-200/90 bg-white px-4 text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          }
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
@@ -237,13 +278,8 @@ export default function MapPage() {
           <MapControls />
         </div>
 
-        {/* Bottom-left: event type legend / filter */}
-        <div className="pointer-events-auto absolute bottom-6 left-4 z-10 max-w-[calc(100vw-5.5rem)]">
-          <EventTypeFilterLegend />
-        </div>
-
-        {/* Bottom-right: report */}
-        <ReportFAB />
+        {/* After map tap or search pick — Add police here / Cancel */}
+        <PreviewReportActions />
       </MapViewDynamic>
 
       {mapLoading && (

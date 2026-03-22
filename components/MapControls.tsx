@@ -31,25 +31,18 @@ export function MapControls() {
         <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Legend
         </p>
-        <div className="flex flex-wrap gap-2">
-          {(["checkpoint", "accident", "hazard", "roadblock"] as const).map(
-            (t) => (
-              <span
-                key={t}
-                className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300"
-                style={{
-                  backgroundColor: `${EVENT_TYPE_COLORS[t]}20`,
-                }}
-              >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: EVENT_TYPE_COLORS[t] }}
-                />
-                {EVENT_TYPE_LABELS[t]}
-              </span>
-            )
-          )}
-        </div>
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300"
+          style={{
+            backgroundColor: `${EVENT_TYPE_COLORS.police}20`,
+          }}
+        >
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: EVENT_TYPE_COLORS.police }}
+          />
+          {EVENT_TYPE_LABELS.police}
+        </span>
       </div>
 
       <div className="rounded-xl bg-white/95 p-3 shadow-md backdrop-blur dark:bg-zinc-900/95">

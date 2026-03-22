@@ -1,12 +1,5 @@
 import { create } from "zustand";
-import type { EventType, TrafficEvent } from "@/lib/types";
-
-const defaultEventTypeVisible: Record<EventType, boolean> = {
-  checkpoint: true,
-  accident: true,
-  hazard: true,
-  roadblock: true,
-};
+import type { TrafficEvent } from "@/lib/types";
 
 interface MapStore {
   events: TrafficEvent[];
@@ -24,14 +17,15 @@ interface MapStore {
     placeLabel?: string | null
   ) => void;
   closeReportModal: () => void;
-  /** Toggle visibility of markers by event type (legend / filter). */
-  eventTypeVisible: Record<EventType, boolean>;
-  toggleEventTypeVisible: (type: EventType) => void;
-  /** After search pick: show pin + highlight Report until user confirms. */
+  /** After search pick: show pin + Add police here / Cancel until confirmed. */
   searchPreview: { lat: number; lng: number; placeLabel: string } | null;
   setSearchPreview: (
     preview: { lat: number; lng: number; placeLabel: string } | null
   ) => void;
+
+  /** After map click: zoom + pin with Add Event until confirmed or replaced. */
+  mapClickPreview: { lat: number; lng: number } | null;
+  setMapClickPreview: (preview: { lat: number; lng: number } | null) => void;
 
   /** Last known user location (for a map marker). */
   userLocation: { lat: number; lng: number } | null;
@@ -59,16 +53,11 @@ export const useMapStore = create<MapStore>((set) => ({
       reportCoords: null,
       reportPlaceLabel: null,
     }),
-  eventTypeVisible: { ...defaultEventTypeVisible },
-  toggleEventTypeVisible: (type) =>
-    set((s) => ({
-      eventTypeVisible: {
-        ...s.eventTypeVisible,
-        [type]: !s.eventTypeVisible[type],
-      },
-    })),
   searchPreview: null,
   setSearchPreview: (searchPreview) => set({ searchPreview }),
+
+  mapClickPreview: null,
+  setMapClickPreview: (mapClickPreview) => set({ mapClickPreview }),
 
   userLocation: null,
   setUserLocation: (userLocation) => set({ userLocation }),

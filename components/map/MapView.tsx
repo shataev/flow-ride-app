@@ -1,15 +1,17 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useMemo } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MapContext } from "./MapContext";
 import { EventMarkers } from "./EventMarkers";
 import { SearchPreviewMarker } from "./SearchPreviewMarker";
+import { MapClickPreviewMarker } from "./MapClickPreviewMarker";
 import { UserLocationMarker } from "./UserLocationMarker";
 import { useMapStore } from "@/lib/store";
 import { useEvents } from "@/hooks/useEvents";
 import { useMap } from "@/hooks/useMap";
+import { MAP_CLICK_PREVIEW_MIN_ZOOM } from "@/lib/constants";
 
 interface MapViewProps {
   mapboxToken: string;
@@ -29,17 +31,12 @@ export function MapView({
   const { loadEvents } = useEvents();
 
   const events = useMapStore((s) => s.events);
-  const eventTypeVisible = useMapStore((s) => s.eventTypeVisible);
-  const openReportModal = useMapStore((s) => s.openReportModal);
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
   const searchPreview = useMapStore((s) => s.searchPreview);
+  const mapClickPreview = useMapStore((s) => s.mapClickPreview);
+  const setMapClickPreview = useMapStore((s) => s.setMapClickPreview);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
   const userLocation = useMapStore((s) => s.userLocation);
-
-  const visibleEvents = useMemo(
-    () => events.filter((e) => eventTypeVisible[e.type]),
-    [events, eventTypeVisible]
-  );
 
   const loadEventsAtCenter = useCallback(async () => {
     const map = getMap();
@@ -66,7 +63,16 @@ export function MapView({
     const onClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
       setSearchPreview(null);
-      openReportModal(lat, lng);
+      const targetZoom = Math.min(
+        18,
+        Math.max(map.getZoom(), MAP_CLICK_PREVIEW_MIN_ZOOM)
+      );
+      map.flyTo({
+        center: [lng, lat],
+        zoom: targetZoom,
+        duration: 600,
+      });
+      setMapClickPreview({ lat, lng });
     };
 
     map.on("load", onLoad);
@@ -81,8 +87,8 @@ export function MapView({
     };
   }, [
     mapboxToken,
-    openReportModal,
     setSearchPreview,
+    setMapClickPreview,
     loadEventsAtCenter,
     initMap,
     destroy,
@@ -91,9 +97,10 @@ export function MapView({
   const handleEventClick = useCallback(
     (event: import("@/lib/types").TrafficEvent) => {
       setSearchPreview(null);
+      setMapClickPreview(null);
       setSelectedEvent(event);
     },
-    [setSearchPreview, setSelectedEvent]
+    [setSearchPreview, setMapClickPreview, setSelectedEvent]
   );
 
   return (
@@ -102,7 +109,7 @@ export function MapView({
         <div ref={containerRef} className="absolute inset-0 h-full w-full" />
         <EventMarkers
           map={getMap()}
-          events={visibleEvents}
+          events={events}
           onEventClick={handleEventClick}
         />
         {userLocation && (
@@ -117,6 +124,13 @@ export function MapView({
             map={getMap()}
             lat={searchPreview.lat}
             lng={searchPreview.lng}
+          />
+        )}
+        {mapClickPreview && (
+          <MapClickPreviewMarker
+            map={getMap()}
+            lat={mapClickPreview.lat}
+            lng={mapClickPreview.lng}
           />
         )}
         <div className="pointer-events-none absolute inset-0">
