@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useMapStore } from "@/lib/store";
-import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from "@/lib/constants";
+import { EVENT_TYPE_COLORS, EVENT_TYPE_LABELS } from "@/lib/constants";
+import {
+  EVENT_TYPE_ICON_PATHS,
+  EVENT_TYPE_ICON_RENDER_SIZE,
+} from "@/lib/eventTypeIcons";
 import { formatEventAddedAt } from "@/lib/formatEventDate";
 import { deleteEvent } from "@/services/events";
 
@@ -42,6 +46,9 @@ export function EventPopup() {
 
   const color = EVENT_TYPE_COLORS[selectedEvent.type] ?? "#6b7280";
   const addedAtLabel = formatEventAddedAt(selectedEvent.createdAt);
+  const typeLabel =
+    EVENT_TYPE_LABELS[selectedEvent.type] ?? "Event on the road";
+  const eventTitleIconH = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
 
   return (
     <div className="fixed inset-x-4 bottom-24 z-40 mx-auto max-w-md sm:bottom-6 sm:left-auto sm:right-6">
@@ -55,10 +62,23 @@ export function EventPopup() {
           <div className="min-w-0 flex-1">
             <span
               id="event-popup-title"
-              className="inline-block rounded-[2px] border-2 px-2 py-0.5 font-mono text-xs font-semibold text-white shadow-[2px_2px_0px_rgba(0,0,0,0.2)] dark:shadow-[2px_2px_0px_rgba(0,0,0,0.35)]"
+              className="inline-flex items-center gap-1 rounded-[2px] border-2 px-2 py-0.5 font-mono text-xs font-semibold text-white shadow-[2px_2px_0px_rgba(0,0,0,0.2)] dark:shadow-[2px_2px_0px_rgba(0,0,0,0.35)]"
               style={{ backgroundColor: color, borderColor: color }}
+              aria-label={typeLabel}
             >
-              {EVENT_TYPE_LABELS[selectedEvent.type]}
+              <img
+                src={EVENT_TYPE_ICON_PATHS[selectedEvent.type]}
+                alt=""
+                aria-hidden
+                width={27}
+                height={eventTitleIconH}
+                style={{
+                  imageRendering: "pixelated",
+                  transform: "translateY(-2px)",
+                }}
+                className="shrink-0"
+              />
+              <span>On the road</span>
             </span>
             {selectedEvent.description && (
               <p className="mt-2 font-mono text-sm text-zinc-600 dark:text-zinc-400">
