@@ -3,13 +3,8 @@
 import { useState } from "react";
 import { reportEvent } from "@/services/events";
 import { useMapStore } from "@/lib/store";
-import type { EventType } from "@/lib/types";
-import { EVENT_TYPE_LABELS } from "@/lib/constants";
-
-const EVENT_TYPES: EventType[] = ["checkpoint", "accident", "hazard", "roadblock"];
 
 export function ReportModal() {
-  const [type, setType] = useState<EventType>("hazard");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +24,7 @@ export function ReportModal() {
     setError(null);
     try {
       const created = await reportEvent({
-        type,
+        type: "police",
         lat: reportCoords.lat,
         lng: reportCoords.lng,
         description: description.trim() || undefined,
@@ -37,7 +32,6 @@ export function ReportModal() {
       addEvent(created);
       closeReportModal();
       setDescription("");
-      setType("hazard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to report");
     } finally {
@@ -54,7 +48,7 @@ export function ReportModal() {
       />
       <div className="relative z-10 w-full max-w-md rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl dark:bg-zinc-900">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Report event
+          Report police on the road
         </h2>
         <p className="mt-1 text-sm text-zinc-500">
           {reportPlaceLabel ? (
@@ -74,27 +68,6 @@ export function ReportModal() {
           )}
         </p>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Event type
-            </label>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {EVENT_TYPES.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setType(t)}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    type === t
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                  }`}
-                >
-                  {EVENT_TYPE_LABELS[t]}
-                </button>
-              ))}
-            </div>
-          </div>
           <div>
             <label htmlFor="desc" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Description (optional)

@@ -1,6 +1,6 @@
 import mongoose, { Schema, model, models } from "mongoose";
 
-const EVENT_TYPES = ["checkpoint", "accident", "hazard", "roadblock"] as const;
+const EVENT_TYPES = ["police"] as const;
 export type EventTypeDoc = (typeof EVENT_TYPES)[number];
 
 const EXPIRY_HOURS = 3;
@@ -42,4 +42,11 @@ export function getExpiresAt(): Date {
   return d;
 }
 
-export const Event = models.Event ?? model("Event", eventSchema);
+// Next.js keeps modules in memory; `model()` is only applied the first time `Event` is
+// registered. After changing `enum` (e.g. to `police`), a stale schema would still reject
+// new values until the process restarts. Drop the cached model so the current schema wins.
+if (models.Event) {
+  mongoose.deleteModel("Event");
+}
+
+export const Event = model("Event", eventSchema);

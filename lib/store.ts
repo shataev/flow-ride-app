@@ -1,12 +1,5 @@
 import { create } from "zustand";
-import type { EventType, TrafficEvent } from "@/lib/types";
-
-const defaultEventTypeVisible: Record<EventType, boolean> = {
-  checkpoint: true,
-  accident: true,
-  hazard: true,
-  roadblock: true,
-};
+import type { TrafficEvent } from "@/lib/types";
 
 interface MapStore {
   events: TrafficEvent[];
@@ -24,9 +17,6 @@ interface MapStore {
     placeLabel?: string | null
   ) => void;
   closeReportModal: () => void;
-  /** Toggle visibility of markers by event type (legend / filter). */
-  eventTypeVisible: Record<EventType, boolean>;
-  toggleEventTypeVisible: (type: EventType) => void;
   /** After search pick: show pin + highlight Report until user confirms. */
   searchPreview: { lat: number; lng: number; placeLabel: string } | null;
   setSearchPreview: (
@@ -63,14 +53,6 @@ export const useMapStore = create<MapStore>((set) => ({
       reportCoords: null,
       reportPlaceLabel: null,
     }),
-  eventTypeVisible: { ...defaultEventTypeVisible },
-  toggleEventTypeVisible: (type) =>
-    set((s) => ({
-      eventTypeVisible: {
-        ...s.eventTypeVisible,
-        [type]: !s.eventTypeVisible[type],
-      },
-    })),
   searchPreview: null,
   setSearchPreview: (searchPreview) => set({ searchPreview }),
 

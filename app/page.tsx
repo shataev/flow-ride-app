@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { MapView } from "@/components/map/MapView";
 import { MapControls } from "@/components/map/MapControls";
 import { useMapContext } from "@/components/map/MapContext";
-import { EventTypeFilterLegend } from "@/components/map/EventTypeFilterLegend";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { FloatingButton } from "@/components/ui/FloatingButton";
 import { EventPopup } from "@/components/EventPopup";
@@ -191,50 +190,67 @@ function ReportFAB() {
     getMap,
   ]);
 
+  const handleCancelMapClick = useCallback(() => {
+    setMapClickPreview(null);
+  }, [setMapClickPreview]);
+
   const policeIconPx = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
+
+  if (mapClickPreview) {
+    return (
+      <div className="pointer-events-auto absolute bottom-6 left-0 right-0 z-10 flex justify-center px-4">
+        <div className="flex w-full max-w-md flex-col gap-2 sm:max-w-xl sm:flex-row sm:gap-3">
+          <button
+            type="button"
+            onClick={handleReportClick}
+            aria-label="Add police at this location"
+            className={
+              "inline-flex h-12 w-full shrink-0 items-center justify-center gap-1.5 rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 text-sm font-semibold text-zinc-900 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 " +
+              "ring-4 ring-blue-500 ring-offset-2 ring-offset-white animate-pulse dark:ring-offset-zinc-900 sm:flex-1"
+            }
+          >
+            <span className="whitespace-nowrap">Add police</span>
+            <img
+              src={EVENT_TYPE_ICON_PATHS.police}
+              alt=""
+              aria-hidden
+              width={policeIconPx}
+              height={policeIconPx}
+              style={{ imageRendering: "pixelated" }}
+              className="shrink-0"
+            />
+            <span className="whitespace-nowrap">here</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleCancelMapClick}
+            className="h-12 w-full shrink-0 rounded-lg border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 sm:flex-1"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pointer-events-auto absolute bottom-6 right-4 z-10">
-      {mapClickPreview ? (
-        <button
-          type="button"
-          onClick={handleReportClick}
-          aria-label="Add event at this location"
-          className={
-            "inline-flex h-12 max-w-[min(100vw-2rem,20rem)] shrink-0 items-center justify-center gap-1.5 rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 text-sm font-semibold text-zinc-900 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:scale-95 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 " +
-            "ring-4 ring-blue-500 ring-offset-2 ring-offset-white animate-pulse dark:ring-offset-zinc-900"
-          }
-        >
-          <span className="whitespace-nowrap">Add</span>
+      <FloatingButton
+        onClick={handleReportClick}
+        aria-label="Report event"
+        highlight={!!searchPreview}
+        icon={
           <img
-            src={EVENT_TYPE_ICON_PATHS.checkpoint}
+            src="/icons/png/add-event-alert.png"
             alt=""
             aria-hidden
-            width={policeIconPx}
-            height={policeIconPx}
+            width={32}
+            height={32}
             style={{ imageRendering: "pixelated" }}
-            className="shrink-0"
+            className="h-8 w-8"
           />
-          <span className="whitespace-nowrap">here</span>
-        </button>
-      ) : (
-        <FloatingButton
-          onClick={handleReportClick}
-          aria-label="Report event"
-          highlight={!!searchPreview}
-          icon={
-            <img
-              src="/icons/png/add-event-alert.png"
-              alt=""
-              aria-hidden
-              width={32}
-              height={32}
-              style={{ imageRendering: "pixelated" }}
-              className="h-8 w-8"
-            />
-          }
-        />
-      )}
+        }
+      />
     </div>
   );
 }
@@ -283,12 +299,7 @@ export default function MapPage() {
           <MapControls />
         </div>
 
-        {/* Bottom-left: event type legend / filter */}
-        <div className="pointer-events-auto absolute bottom-6 left-4 z-10 max-w-[calc(100vw-5.5rem)]">
-          <EventTypeFilterLegend />
-        </div>
-
-        {/* Bottom-right: report */}
+        {/* Report FAB (bottom-right); after map tap — centered Add police / Cancel */}
         <ReportFAB />
       </MapViewDynamic>
 

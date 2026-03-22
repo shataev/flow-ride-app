@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Event, getExpiresAt } from "@/models/Event";
 
-const EVENT_TYPES = ["checkpoint", "accident", "hazard", "roadblock"] as const;
+const EVENT_TYPES = ["police"] as const;
+/** Legacy DB values still returned as `police` in the API. */
+const LEGACY_POLICE_TYPES = ["checkpoint"] as const;
 
 function isValidCoord(n: unknown): n is number {
   return typeof n === "number" && Number.isFinite(n) && n >= -180 && n <= 180;
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
 
     const events = await Event.find({
       city,
+      type: { $in: [...EVENT_TYPES, ...LEGACY_POLICE_TYPES] },
       location: {
         $near: {
           $geometry: {
@@ -43,15 +46,23 @@ export async function GET(request: NextRequest) {
       .lean()
       .exec();
 
-    const list = events.map((e) => ({
+    const list = events.map((e) => {
+      const loc = e.location as unknown as { coordinates: [number, number] };
+      return {
       id: String(e._id),
-      type: e.type,
-      lat: (e.location as { coordinates: [number, number] }).coordinates[1],
-      lng: (e.location as { coordinates: [number, number] }).coordinates[0],
+      type:
+        LEGACY_POLICE_TYPES.includes(
+          e.type as (typeof LEGACY_POLICE_TYPES)[number]
+        )
+          ? "police"
+          : e.type,
+      lat: loc.coordinates[1],
+      lng: loc.coordinates[0],
       confirmations: e.confirmations,
       rejections: e.rejections,
       createdAt: e.createdAt,
-    }));
+    };
+    });
 
     return NextResponse.json(list);
   } catch (err) {
@@ -70,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     if (!EVENT_TYPES.includes(type)) {
       return NextResponse.json(
-        { error: "type must be one of: checkpoint, accident, hazard, roadblock" },
+        { error: "type must be: police" },
         { status: 400 }
       );
     }
@@ -104,11 +115,12 @@ export async function POST(request: NextRequest) {
       expiresAt: getExpiresAt(),
     });
 
+    const coords = doc.location!.coordinates;
     return NextResponse.json({
       id: String(doc._id),
       type: doc.type,
-      lat: doc.location.coordinates[1],
-      lng: doc.location.coordinates[0],
+      lat: coords[1],
+      lng: coords[0],
       createdAt: doc.createdAt,
     });
   } catch (err) {

@@ -7,16 +7,9 @@ export const EVENTS_RADIUS_M = 5000;
 export const CITY = "danang";
 
 export const EVENT_TYPE_COLORS: Record<string, string> = {
-  // Colors used for marker borders (icons are self-colored).
-  checkpoint: "#2563eb", // police
-  accident: "#facc15", // accident sign
-  hazard: "#facc15", // warning sign
-  roadblock: "#f97316", // road works sign
+  police: "#2563eb",
 };
 
 export const EVENT_TYPE_LABELS: Record<string, string> = {
-  checkpoint: "Police checkpoint",
-  accident: "Accident ahead",
-  hazard: "Warning",
-  roadblock: "Road works",
+  police: "Police on the road",
 };

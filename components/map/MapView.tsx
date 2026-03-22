@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useMemo } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MapContext } from "./MapContext";
@@ -31,18 +31,12 @@ export function MapView({
   const { loadEvents } = useEvents();
 
   const events = useMapStore((s) => s.events);
-  const eventTypeVisible = useMapStore((s) => s.eventTypeVisible);
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
   const searchPreview = useMapStore((s) => s.searchPreview);
   const mapClickPreview = useMapStore((s) => s.mapClickPreview);
   const setMapClickPreview = useMapStore((s) => s.setMapClickPreview);
   const setSelectedEvent = useMapStore((s) => s.setSelectedEvent);
   const userLocation = useMapStore((s) => s.userLocation);
-
-  const visibleEvents = useMemo(
-    () => events.filter((e) => eventTypeVisible[e.type]),
-    [events, eventTypeVisible]
-  );
 
   const loadEventsAtCenter = useCallback(async () => {
     const map = getMap();
@@ -115,7 +109,7 @@ export function MapView({
         <div ref={containerRef} className="absolute inset-0 h-full w-full" />
         <EventMarkers
           map={getMap()}
-          events={visibleEvents}
+          events={events}
           onEventClick={handleEventClick}
         />
         {userLocation && (
