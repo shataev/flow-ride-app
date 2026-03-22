@@ -3,7 +3,7 @@ import mongoose, { Schema, model, models } from "mongoose";
 const EVENT_TYPES = ["police"] as const;
 export type EventTypeDoc = (typeof EVENT_TYPES)[number];
 
-const EXPIRY_HOURS = 3;
+const EXPIRY_HOURS = 1;
 
 const eventSchema = new Schema(
   {
