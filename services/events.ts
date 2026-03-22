@@ -35,3 +35,19 @@ export async function reportEvent(payload: ReportEventPayload): Promise<TrafficE
   }
   return res.json();
 }
+
+export async function deleteEvent(id: string): Promise<void> {
+  const base =
+    getApiBaseUrl() ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const res = await fetch(`${base}/api/events/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { error?: string }).error ??
+        `Failed to delete event: ${res.status}`
+    );
+  }
+}
