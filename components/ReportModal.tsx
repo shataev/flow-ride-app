@@ -120,7 +120,7 @@ export function ReportModal() {
               }
               maxLength={EVENT_DESCRIPTION_MAX_LENGTH}
               rows={2}
-              className="mt-1.5 w-full rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 py-2 font-mono text-sm text-zinc-900 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] placeholder-zinc-400 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
+              className="mt-1.5 w-full rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 py-2 font-mono text-base text-zinc-900 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] placeholder-zinc-400 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
               placeholder="Brief description..."
             />
             <p className="mt-1 font-mono text-xs text-zinc-500 dark:text-zinc-500">
