@@ -50,14 +50,22 @@ export function EventPopup() {
     EVENT_TYPE_LABELS[selectedEvent.type] ?? "Event on the road";
   const eventTitleIconH = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
 
+  const dismiss = () => setSelectedEvent(null);
+
   return (
-    <div className="fixed inset-x-4 bottom-24 z-40 mx-auto max-w-md sm:bottom-6 sm:left-auto sm:right-6">
+    <>
       <div
-        className="rounded-[2px] border-2 border-zinc-200/90 bg-white/95 p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] backdrop-blur dark:border-zinc-600/90 dark:bg-zinc-900/95 dark:shadow-[4px_4px_0px_rgba(0,0,0,0.35)]"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="event-popup-title"
-      >
+        className="fixed inset-0 z-[39] bg-black/40"
+        onClick={dismiss}
+        aria-hidden
+      />
+      <div className="pointer-events-none fixed inset-x-4 bottom-24 z-40 mx-auto max-w-md sm:bottom-6 sm:left-auto sm:right-6">
+        <div
+          className="pointer-events-auto rounded-[2px] border-2 border-zinc-200/90 bg-white/95 p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] backdrop-blur dark:border-zinc-600/90 dark:bg-zinc-900/95 dark:shadow-[4px_4px_0px_rgba(0,0,0,0.35)]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="event-popup-title"
+        >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <span
@@ -74,7 +82,6 @@ export function EventPopup() {
                 height={eventTitleIconH}
                 style={{
                   imageRendering: "pixelated",
-                  transform: "translateY(-2px)",
                 }}
                 className="shrink-0"
               />
@@ -100,7 +107,7 @@ export function EventPopup() {
           </div>
           <button
             type="button"
-            onClick={() => setSelectedEvent(null)}
+            onClick={dismiss}
             className="shrink-0 rounded-[2px] border-2 border-zinc-200/90 bg-white p-1.5 text-zinc-500 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] transition-transform hover:bg-zinc-50 hover:text-zinc-800 active:translate-x-[1px] active:translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-400 dark:shadow-[2px_2px_0px_rgba(0,0,0,0.25)] dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
             aria-label="Close"
           >
@@ -125,7 +132,8 @@ export function EventPopup() {
         >
           {removing ? "Removing…" : "Not here anymore"}
         </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
