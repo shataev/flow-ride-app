@@ -14,7 +14,7 @@ export const EVENTS_RADIUS_M = 5000;
 export const CITY = "danang";
 
 export const EVENT_TYPE_COLORS: Record<string, string> = {
-  police: "#2563eb",
+  police: "#ff0000b3",
 };
 
 export const EVENT_TYPE_LABELS: Record<string, string> = {
