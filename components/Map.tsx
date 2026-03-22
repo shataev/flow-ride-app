@@ -7,6 +7,7 @@ import { EventMarker } from "./EventMarker";
 import { useMapStore } from "@/lib/store";
 import { useEvents } from "@/hooks/useEvents";
 import { useMap } from "@/hooks/useMap";
+import { getViewportEventsRadiusM } from "@/lib/mapGeo";
 
 interface MapProps {
   mapboxToken: string;
@@ -38,10 +39,11 @@ export function Map({
     const map = getMap();
     if (!map) return;
     const { lng, lat } = getCenter();
+    const radius = getViewportEventsRadiusM(map);
     setLoading?.(true);
     setError?.(null);
     try {
-      await loadEvents(lat, lng);
+      await loadEvents(lat, lng, radius);
       onEventsLoad?.();
     } catch (err) {
       const e = err instanceof Error ? err : new Error(String(err));
