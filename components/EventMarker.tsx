@@ -4,7 +4,10 @@ import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import type { TrafficEvent } from "@/lib/types";
 import { EVENT_TYPE_COLORS } from "@/lib/constants";
-import { EVENT_TYPE_ICON_PATHS } from "@/lib/eventTypeIcons";
+import {
+  EVENT_TYPE_ICON_PATHS,
+  EVENT_TYPE_ICON_RENDER_SIZE,
+} from "@/lib/eventTypeIcons";
 
 interface EventMarkerProps {
   event: TrafficEvent;
@@ -15,28 +18,31 @@ interface EventMarkerProps {
 export function EventMarker({ event, map, onClick }: EventMarkerProps) {
   const mapboxMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const onClickRef = useRef(onClick);
-  onClickRef.current = onClick;
+
+  useEffect(() => {
+    onClickRef.current = onClick;
+  }, [onClick]);
 
   useEffect(() => {
     if (!map) return;
     const el = document.createElement("button");
     el.type = "button";
     el.className =
-      "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer";
-    el.style.backgroundColor = EVENT_TYPE_COLORS[event.type] ?? "#6b7280";
+      "flex h-12 w-12 items-center justify-center rounded-[2px] border-2 border-zinc-900/70 bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,0.25)] transition-transform hover:translate-x-[1px] hover:translate-y-[1px] focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer p-0";
+    const color = EVENT_TYPE_COLORS[event.type] ?? "#6b7280";
+    el.style.borderColor = color;
     el.setAttribute("aria-label", `${event.type} event`);
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("fill", "white");
-    path.setAttribute(
-      "d",
-      EVENT_TYPE_ICON_PATHS[event.type] ?? EVENT_TYPE_ICON_PATHS.hazard
-    );
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("width", "14");
-    svg.setAttribute("height", "14");
-    svg.appendChild(path);
-    el.appendChild(svg);
+
+    const img = document.createElement("img");
+    img.src = EVENT_TYPE_ICON_PATHS[event.type];
+    img.alt = "";
+    img.setAttribute("aria-hidden", "true");
+    img.width = EVENT_TYPE_ICON_RENDER_SIZE;
+    img.height = EVENT_TYPE_ICON_RENDER_SIZE;
+    img.style.imageRendering = "pixelated";
+    img.style.width = `${Math.round(EVENT_TYPE_ICON_RENDER_SIZE)}px`;
+    img.style.height = `${Math.round(EVENT_TYPE_ICON_RENDER_SIZE)}px`;
+    el.appendChild(img);
     el.addEventListener("click", (e) => {
       e.stopPropagation();
       onClickRef.current?.(event);

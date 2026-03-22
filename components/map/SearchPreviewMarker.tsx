@@ -23,10 +23,10 @@ export function SearchPreviewMarker({
 
     const ping = document.createElement("span");
     ping.style.cssText =
-      "position:absolute;inset:0;border-radius:9999px;background:#60a5fa;opacity:0.75;animation:searchPreviewPing 1.2s cubic-bezier(0,0,0.2,1) infinite;";
+      "position:absolute;inset:0;border-radius:4px;background:#60a5fa;opacity:0.75;animation:searchPreviewPing 1.2s cubic-bezier(0,0,0.2,1) infinite;";
     const dot = document.createElement("span");
     dot.style.cssText =
-      "position:relative;width:16px;height:16px;border-radius:9999px;background:#2563eb;border:2px solid #fff;box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.15),0 0 0 3px rgb(96 165 250 / 0.5);";
+      "position:relative;width:16px;height:16px;border-radius:2px;background:#2563eb;border:2px solid #fff;box-shadow:4px 4px 0 rgb(0 0 0 / 0.12);";
 
     const inner = document.createElement("span");
     inner.style.cssText =

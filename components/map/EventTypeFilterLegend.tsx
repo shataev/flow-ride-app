@@ -2,7 +2,11 @@
 
 import { useMapStore } from "@/lib/store";
 import { EVENT_TYPE_COLORS, EVENT_TYPE_LABELS } from "@/lib/constants";
-import { EVENT_TYPES, EVENT_TYPE_ICON_PATHS } from "@/lib/eventTypeIcons";
+import {
+  EVENT_TYPES,
+  EVENT_TYPE_ICON_PATHS,
+  EVENT_TYPE_ICON_RENDER_SIZE,
+} from "@/lib/eventTypeIcons";
 import type { EventType } from "@/lib/types";
 
 /**
@@ -33,19 +37,15 @@ export function EventTypeFilterLegend() {
         Filter traffic events on the map by type
       </legend>
       <div
-        className="flex max-w-[min(100vw-7rem,20rem)] flex-wrap items-center gap-2 rounded-2xl border border-zinc-200/90 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm dark:border-zinc-600/90 dark:bg-zinc-900/95"
+        className="flex max-w-[min(100vw-7rem,20rem)] flex-wrap items-center gap-2 rounded-none border-2 border-zinc-200/90 bg-white/95 px-3 py-2.5 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] backdrop-blur-sm dark:border-zinc-600/90 dark:bg-zinc-900/95 dark:shadow-[4px_4px_0px_rgba(0,0,0,0.35)]"
         role="group"
         aria-label="Event type filter"
       >
-        <span className="w-full text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Events
-        </span>
         <div className="flex flex-wrap gap-2">
           {EVENT_TYPES.map((type) => {
             const on = eventTypeVisible[type];
             const label = EVENT_TYPE_LABELS[type] ?? type;
             const color = EVENT_TYPE_COLORS[type] ?? "#6b7280";
-            const path = EVENT_TYPE_ICON_PATHS[type];
             return (
               <button
                 key={type}
@@ -55,21 +55,22 @@ export function EventTypeFilterLegend() {
                 title={`${label}: ${on ? "visible" : "hidden"}`}
                 onClick={() => handleToggle(type)}
                 className={
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 " +
+                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-[2px] border-2 border-zinc-900/70 bg-white/80 shadow-[4px_4px_0px_rgba(0,0,0,0.25)] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-zinc-100/70 dark:bg-zinc-900/80 dark:focus-visible:ring-offset-zinc-900 " +
                   (on
                     ? "scale-100 opacity-100 ring-2 ring-zinc-300 ring-offset-1 dark:ring-zinc-600"
                     : "scale-95 opacity-40 grayscale hover:opacity-60")
                 }
-                style={{ backgroundColor: color }}
+                style={{ borderColor: color }}
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  width={14}
-                  height={14}
+                <img
+                  src={EVENT_TYPE_ICON_PATHS[type]}
+                  alt=""
                   aria-hidden
-                >
-                  <path fill="white" d={path} />
-                </svg>
+                  width={EVENT_TYPE_ICON_RENDER_SIZE}
+                  height={EVENT_TYPE_ICON_RENDER_SIZE}
+                  style={{ imageRendering: "pixelated" }}
+                  className="h-8 w-8"
+                />
               </button>
             );
           })}

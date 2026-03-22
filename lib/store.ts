@@ -32,6 +32,10 @@ interface MapStore {
   setSearchPreview: (
     preview: { lat: number; lng: number; placeLabel: string } | null
   ) => void;
+
+  /** Last known user location (for a map marker). */
+  userLocation: { lat: number; lng: number } | null;
+  setUserLocation: (loc: { lat: number; lng: number } | null) => void;
 }
 
 export const useMapStore = create<MapStore>((set) => ({
@@ -65,4 +69,7 @@ export const useMapStore = create<MapStore>((set) => ({
     })),
   searchPreview: null,
   setSearchPreview: (searchPreview) => set({ searchPreview }),
+
+  userLocation: null,
+  setUserLocation: (userLocation) => set({ userLocation }),
 }));
