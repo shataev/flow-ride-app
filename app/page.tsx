@@ -6,7 +6,6 @@ import { MapView } from "@/components/map/MapView";
 import { MapControls } from "@/components/map/MapControls";
 import { useMapContext } from "@/components/map/MapContext";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { FloatingButton } from "@/components/ui/FloatingButton";
 import { EventPopup } from "@/components/EventPopup";
 import { ReportModal } from "@/components/ReportModal";
 import {
@@ -123,7 +122,7 @@ function SearchBarOverlay() {
         value={query}
         onChange={setQuery}
         onFocus={onFocus}
-        placeholder="Search place to report event…"
+        placeholder="Search for a place…"
       />
       {open && (results.length > 0 || searching) && (
         <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-y-auto rounded-2xl bg-white py-1 shadow-xl ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700">
@@ -153,15 +152,14 @@ function SearchBarOverlay() {
   );
 }
 
-function ReportFAB() {
-  const { getMap } = useMapContext();
+function PreviewReportActions() {
   const searchPreview = useMapStore((s) => s.searchPreview);
   const mapClickPreview = useMapStore((s) => s.mapClickPreview);
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
   const setMapClickPreview = useMapStore((s) => s.setMapClickPreview);
   const openReportModal = useMapStore((s) => s.openReportModal);
 
-  const handleReportClick = useCallback(() => {
+  const handleConfirm = useCallback(() => {
     if (searchPreview) {
       openReportModal(
         searchPreview.lat,
@@ -174,12 +172,6 @@ function ReportFAB() {
     if (mapClickPreview) {
       openReportModal(mapClickPreview.lat, mapClickPreview.lng);
       setMapClickPreview(null);
-      return;
-    }
-    const map = getMap();
-    if (map) {
-      const c = map.getCenter();
-      openReportModal(c.lat, c.lng);
     }
   }, [
     searchPreview,
@@ -187,70 +179,51 @@ function ReportFAB() {
     openReportModal,
     setSearchPreview,
     setMapClickPreview,
-    getMap,
   ]);
 
-  const handleCancelMapClick = useCallback(() => {
+  const handleCancel = useCallback(() => {
+    setSearchPreview(null);
     setMapClickPreview(null);
-  }, [setMapClickPreview]);
+  }, [setSearchPreview, setMapClickPreview]);
 
   const policeIconPx = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
 
-  if (mapClickPreview) {
-    return (
-      <div className="pointer-events-auto absolute bottom-6 left-0 right-0 z-10 flex justify-center px-4">
-        <div className="flex w-full max-w-md flex-col gap-2 sm:max-w-xl sm:flex-row sm:gap-3">
-          <button
-            type="button"
-            onClick={handleReportClick}
-            aria-label="Add police at this location"
-            className={
-              "inline-flex h-12 w-full shrink-0 items-center justify-center gap-1.5 rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 text-sm font-semibold text-zinc-900 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 " +
-              "ring-4 ring-blue-500 ring-offset-2 ring-offset-white animate-pulse dark:ring-offset-zinc-900 sm:flex-1"
-            }
-          >
-            <span className="whitespace-nowrap">Add police</span>
-            <img
-              src={EVENT_TYPE_ICON_PATHS.police}
-              alt=""
-              aria-hidden
-              width={policeIconPx}
-              height={policeIconPx}
-              style={{ imageRendering: "pixelated" }}
-              className="shrink-0"
-            />
-            <span className="whitespace-nowrap">here</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleCancelMapClick}
-            className="h-12 w-full shrink-0 rounded-lg border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 sm:flex-1"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
+  if (!searchPreview && !mapClickPreview) {
+    return null;
   }
 
   return (
-    <div className="pointer-events-auto absolute bottom-6 right-4 z-10">
-      <FloatingButton
-        onClick={handleReportClick}
-        aria-label="Report event"
-        highlight={!!searchPreview}
-        icon={
+    <div className="pointer-events-auto absolute bottom-6 left-0 right-0 z-10 flex justify-center px-4">
+      <div className="flex w-full max-w-md flex-col gap-2 sm:max-w-xl sm:flex-row sm:gap-3">
+        <button
+          type="button"
+          onClick={handleConfirm}
+          aria-label="Add police at this location"
+          className={
+            "inline-flex h-12 w-full shrink-0 items-center justify-center gap-1.5 rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 text-sm font-semibold text-zinc-900 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 " +
+            "ring-4 ring-blue-500 ring-offset-2 ring-offset-white animate-pulse dark:ring-offset-zinc-900 sm:flex-1"
+          }
+        >
+          <span className="whitespace-nowrap">Add police</span>
           <img
-            src="/icons/png/add-event-alert.png"
+            src={EVENT_TYPE_ICON_PATHS.police}
             alt=""
             aria-hidden
-            width={32}
-            height={32}
+            width={policeIconPx}
+            height={policeIconPx}
             style={{ imageRendering: "pixelated" }}
-            className="h-8 w-8"
+            className="shrink-0"
           />
-        }
-      />
+          <span className="whitespace-nowrap">here</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="h-12 w-full shrink-0 rounded-lg border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 sm:flex-1"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
@@ -299,8 +272,8 @@ export default function MapPage() {
           <MapControls />
         </div>
 
-        {/* Report FAB (bottom-right); after map tap — centered Add police / Cancel */}
-        <ReportFAB />
+        {/* After map tap or search pick — Add police here / Cancel */}
+        <PreviewReportActions />
       </MapViewDynamic>
 
       {mapLoading && (

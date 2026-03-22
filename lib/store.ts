@@ -17,7 +17,7 @@ interface MapStore {
     placeLabel?: string | null
   ) => void;
   closeReportModal: () => void;
-  /** After search pick: show pin + highlight Report until user confirms. */
+  /** After search pick: show pin + Add police here / Cancel until confirmed. */
   searchPreview: { lat: number; lng: number; placeLabel: string } | null;
   setSearchPreview: (
     preview: { lat: number; lng: number; placeLabel: string } | null
