@@ -188,6 +188,9 @@ function PreviewReportActions() {
 
   const policeIconPx = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
 
+  const pixelBtnBase =
+    "h-12 w-full shrink-0 rounded-[2px] border-2 font-mono text-base shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[3px_3px_0px_rgba(0,0,0,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:shadow-[4px_4px_0px_rgba(0,0,0,0.35)] dark:active:shadow-[3px_3px_0px_rgba(0,0,0,0.35)] sm:flex-1";
+
   if (!searchPreview && !mapClickPreview) {
     return null;
   }
@@ -198,20 +201,20 @@ function PreviewReportActions() {
         <button
           type="button"
           onClick={handleConfirm}
-          aria-label="Add police at this location"
+          aria-label="Add at this location"
           className={
-            "inline-flex h-12 w-full shrink-0 items-center justify-center gap-1.5 rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 text-sm font-semibold text-zinc-900 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 " +
-            "ring-4 ring-blue-500 ring-offset-2 ring-offset-white animate-pulse dark:ring-offset-zinc-900 sm:flex-1"
+            pixelBtnBase +
+            " inline-flex items-center justify-center gap-1.5 border-blue-600 bg-blue-50 px-3 text-zinc-900 shadow-[4px_4px_0px_rgba(37,99,235,0.35)] hover:bg-blue-100 active:shadow-[3px_3px_0px_rgba(37,99,235,0.35)] dark:border-blue-400 dark:bg-blue-950/50 dark:text-zinc-100 dark:shadow-[4px_4px_0px_rgba(59,130,246,0.35)] dark:hover:bg-blue-950/70 dark:active:shadow-[3px_3px_0px_rgba(59,130,246,0.35)]"
           }
         >
-          <span className="whitespace-nowrap">Add police</span>
+          <span className="whitespace-nowrap">Add</span>
           <img
             src={EVENT_TYPE_ICON_PATHS.police}
             alt=""
             aria-hidden
-            width={policeIconPx}
+            width="27"
             height={policeIconPx}
-            style={{ imageRendering: "pixelated" }}
+            style={{ imageRendering: "pixelated", transform: "translateY(-3px)" }}
             className="shrink-0"
           />
           <span className="whitespace-nowrap">here</span>
@@ -219,7 +222,10 @@ function PreviewReportActions() {
         <button
           type="button"
           onClick={handleCancel}
-          className="h-12 w-full shrink-0 rounded-lg border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm transition-transform active:scale-[0.98] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 sm:flex-1"
+          className={
+            pixelBtnBase +
+            " border-zinc-200/90 bg-white px-4 text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          }
         >
           Cancel
         </button>
