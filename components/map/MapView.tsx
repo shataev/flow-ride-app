@@ -12,6 +12,7 @@ import { useMapStore } from "@/lib/store";
 import { useEvents } from "@/hooks/useEvents";
 import { useMap } from "@/hooks/useMap";
 import { MAP_CLICK_PREVIEW_MIN_ZOOM } from "@/lib/constants";
+import { getViewportEventsRadiusM } from "@/lib/mapGeo";
 
 interface MapViewProps {
   mapboxToken: string;
@@ -42,10 +43,11 @@ export function MapView({
     const map = getMap();
     if (!map) return;
     const { lng, lat } = getCenter();
+    const radius = getViewportEventsRadiusM(map);
     setLoading?.(true);
     setError?.(null);
     try {
-      await loadEvents(lat, lng);
+      await loadEvents(lat, lng, radius);
     } catch (err) {
       const e = err instanceof Error ? err : new Error(String(err));
       setError?.(e.message);

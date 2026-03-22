@@ -1,15 +1,41 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
 import { useMapContext } from "./MapContext";
 import { FloatingButton } from "@/components/ui/FloatingButton";
-import { DANANG_CENTER } from "@/lib/constants";
+import {
+  DANANG_BOUNDS,
+  DANANG_CENTER,
+  REGION_MAX_EVENTS_RADIUS_M,
+} from "@/lib/constants";
 import { useMapStore } from "@/lib/store";
+import { useEvents } from "@/hooks/useEvents";
+
+const showAllIcon = (
+  <svg
+    width={26}
+    height={26}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="text-zinc-800 dark:text-zinc-100"
+    aria-hidden
+  >
+    <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
+  </svg>
+);
 
 export function MapControls() {
   const { getMap } = useMapContext();
   const [locating, setLocating] = useState(false);
+  const [showRegionBusy, setShowRegionBusy] = useState(false);
+  const showRegionBusyRef = useRef(false);
   const setUserLocation = useMapStore((s) => s.setUserLocation);
+  const { loadEvents } = useEvents();
 
   const handleLocate = useCallback(() => {
     const map = getMap();
@@ -52,8 +78,61 @@ export function MapControls() {
     if (map) map.zoomOut({ duration: 200 });
   }, [getMap]);
 
+  const handleShowAllInRegion = useCallback(async () => {
+    const map = getMap();
+    if (!map || showRegionBusyRef.current) return;
+    showRegionBusyRef.current = true;
+    setShowRegionBusy(true);
+    try {
+      const [lng, lat] = DANANG_CENTER;
+      const list = await loadEvents(lat, lng, REGION_MAX_EVENTS_RADIUS_M);
+      if (list.length === 0) {
+        map.fitBounds(DANANG_BOUNDS, {
+          padding: 56,
+          duration: 900,
+          maxZoom: 12,
+        });
+        return;
+      }
+      if (list.length === 1) {
+        const e = list[0];
+        map.flyTo({
+          center: [e.lng, e.lat],
+          zoom: 13,
+          duration: 800,
+        });
+        return;
+      }
+      const bounds = new mapboxgl.LngLatBounds();
+      for (const e of list) bounds.extend([e.lng, e.lat]);
+      map.fitBounds(bounds, {
+        padding: 72,
+        duration: 900,
+        maxZoom: 14,
+      });
+    } finally {
+      showRegionBusyRef.current = false;
+      setShowRegionBusy(false);
+    }
+  }, [getMap, loadEvents]);
+
   return (
     <div className="flex flex-col gap-2">
+      <FloatingButton
+        onClick={handleShowAllInRegion}
+        aria-label="Show all events in the region"
+        className={showRegionBusy ? "pointer-events-none opacity-70" : ""}
+        icon={
+          showRegionBusy ? (
+            <div
+              className="h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600 dark:border-zinc-600 dark:border-t-blue-400"
+              aria-hidden
+            />
+          ) : (
+            showAllIcon
+          )
+        }
+      />
       <FloatingButton
         onClick={handleLocate}
         aria-label="Center on my location"
