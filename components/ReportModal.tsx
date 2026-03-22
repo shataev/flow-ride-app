@@ -4,6 +4,10 @@ import { useState } from "react";
 import { reportEvent } from "@/services/events";
 import { useMapStore } from "@/lib/store";
 import { EVENT_DESCRIPTION_MAX_LENGTH } from "@/lib/eventDescription";
+import {
+  EVENT_TYPE_ICON_PATHS,
+  EVENT_TYPE_ICON_RENDER_SIZE,
+} from "@/lib/eventTypeIcons";
 
 const pixelBtnBase =
   "min-h-12 flex-1 rounded-[2px] border-2 px-4 font-mono text-base shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[3px_3px_0px_rgba(0,0,0,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50 dark:shadow-[4px_4px_0px_rgba(0,0,0,0.35)] dark:active:shadow-[3px_3px_0px_rgba(0,0,0,0.35)]";
@@ -20,6 +24,8 @@ export function ReportModal() {
   const addEvent = useMapStore((s) => s.addEvent);
 
   if (!reportModalOpen) return null;
+
+  const reportTitleIconH = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +66,23 @@ export function ReportModal() {
       >
         <h2
           id="report-modal-title"
-          className="font-mono text-base font-semibold text-zinc-900 dark:text-zinc-100"
+          className="flex flex-wrap items-center gap-1.5 font-mono text-base font-semibold text-zinc-900 dark:text-zinc-100"
+          aria-label="Report police on the road"
         >
-          Report police on the road
+          <span>Report</span>
+          <img
+            src={EVENT_TYPE_ICON_PATHS.police}
+            alt=""
+            aria-hidden
+            width={27}
+            height={reportTitleIconH}
+            style={{
+              imageRendering: "pixelated",
+              transform: "translateY(-3px)",
+            }}
+            className="shrink-0"
+          />
+          <span>on the road</span>
         </h2>
         <p className="mt-1 font-mono text-sm text-zinc-600 dark:text-zinc-400">
           {reportPlaceLabel ? (

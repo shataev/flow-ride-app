@@ -5,6 +5,7 @@ interface MapStore {
   events: TrafficEvent[];
   setEvents: (events: TrafficEvent[]) => void;
   addEvent: (event: TrafficEvent) => void;
+  removeEvent: (id: string) => void;
   selectedEvent: TrafficEvent | null;
   setSelectedEvent: (event: TrafficEvent | null) => void;
   reportModalOpen: boolean;
@@ -36,6 +37,11 @@ export const useMapStore = create<MapStore>((set) => ({
   events: [],
   setEvents: (events) => set({ events }),
   addEvent: (event) => set((s) => ({ events: [...s.events, event] })),
+  removeEvent: (id) =>
+    set((s) => ({
+      events: s.events.filter((e) => e.id !== id),
+      selectedEvent: s.selectedEvent?.id === id ? null : s.selectedEvent,
+    })),
   selectedEvent: null,
   setSelectedEvent: (selectedEvent) => set({ selectedEvent }),
   reportModalOpen: false,
