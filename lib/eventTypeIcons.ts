@@ -7,7 +7,7 @@ type PixelCoord = readonly [number, number, string];
 
 // Public assets (Next.js serves `public/` at the site root)
 export const EVENT_TYPE_ICON_PATHS: Record<EventType, string> = {
-  police: "/icons/png/police.png",
+  police: "/icons/png/cock.png",
 };
 
 // How big we render the PNG icon in the UI/markers.

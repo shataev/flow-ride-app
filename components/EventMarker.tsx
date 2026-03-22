@@ -31,8 +31,8 @@ export function EventMarker({ event, map, onClick }: EventMarkerProps) {
       "flex h-12 w-12 items-center justify-center rounded-[2px] border-2 border-zinc-900/70 bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,0.25)] transition-transform hover:translate-x-[1px] hover:translate-y-[1px] focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer p-0 rounded-full";
     const color = EVENT_TYPE_COLORS[event.type] ?? "#6b7280";
     el.style.borderColor = color;
-    el.style.backgroundColor = '#ff00008c';
-    el.setAttribute("aria-label", "Police on the road");
+    el.style.backgroundColor = '#2563ebb0';
+    el.setAttribute("aria-label", "Cock on the road");
 
     const img = document.createElement("img");
     img.src = EVENT_TYPE_ICON_PATHS[event.type];
@@ -43,7 +43,7 @@ export function EventMarker({ event, map, onClick }: EventMarkerProps) {
     img.style.imageRendering = "pixelated";
     img.style.width = `${Math.round(EVENT_TYPE_ICON_RENDER_SIZE)}px`;
     img.style.height = `${Math.round(EVENT_TYPE_ICON_RENDER_SIZE)}px`;
-    img.style.transform = 'translateY(-3px)';
+    img.style.transform = 'translateY(-1px)';
     el.appendChild(img);
     el.addEventListener("click", (e) => {
       e.stopPropagation();

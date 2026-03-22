@@ -78,7 +78,7 @@ export function ReportModal() {
             height={reportTitleIconH}
             style={{
               imageRendering: "pixelated",
-              transform: "translateY(-3px)",
+              transform: "translateY(-2px)",
             }}
             className="shrink-0"
           />
