@@ -24,5 +24,6 @@ export interface ReportEventPayload {
   type: EventType;
   lat: number;
   lng: number;
+  /** Plain text, max 255 chars after server normalization. */
   description?: string;
 }
