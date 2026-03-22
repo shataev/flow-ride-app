@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Event, getExpiresAt } from "@/models/Event";
+import { normalizeEventDescription } from "@/lib/eventDescription";
 
 const EVENT_TYPES = ["police"] as const;
 /** Legacy DB values still returned as `police` in the API. */
@@ -58,6 +59,9 @@ export async function GET(request: NextRequest) {
           : e.type,
       lat: loc.coordinates[1],
       lng: loc.coordinates[0],
+      ...(typeof e.description === "string" && e.description.length > 0
+        ? { description: e.description }
+        : {}),
       confirmations: e.confirmations,
       rejections: e.rejections,
       createdAt: e.createdAt,
@@ -77,7 +81,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { city = "danang", type, lat, lng } = body;
+    const { city = "danang", type, lat, lng, description: rawDescription } =
+      body;
+    const description = normalizeEventDescription(rawDescription);
 
     if (!EVENT_TYPES.includes(type)) {
       return NextResponse.json(
@@ -110,6 +116,7 @@ export async function POST(request: NextRequest) {
         type: "Point",
         coordinates: [lngNum, latNum],
       },
+      ...(description !== undefined ? { description } : {}),
       confirmations: 0,
       rejections: 0,
       expiresAt: getExpiresAt(),
@@ -121,6 +128,7 @@ export async function POST(request: NextRequest) {
       type: doc.type,
       lat: coords[1],
       lng: coords[0],
+      ...(doc.description ? { description: doc.description } : {}),
       createdAt: doc.createdAt,
     });
   } catch (err) {

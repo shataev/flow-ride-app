@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { reportEvent } from "@/services/events";
 import { useMapStore } from "@/lib/store";
+import { EVENT_DESCRIPTION_MAX_LENGTH } from "@/lib/eventDescription";
 
 const pixelBtnBase =
   "min-h-12 flex-1 rounded-[2px] border-2 px-4 font-mono text-base shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[3px_3px_0px_rgba(0,0,0,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50 dark:shadow-[4px_4px_0px_rgba(0,0,0,0.35)] dark:active:shadow-[3px_3px_0px_rgba(0,0,0,0.35)]";
@@ -30,7 +31,9 @@ export function ReportModal() {
         type: "police",
         lat: reportCoords.lat,
         lng: reportCoords.lng,
-        description: description.trim() || undefined,
+        description:
+          description.trim().slice(0, EVENT_DESCRIPTION_MAX_LENGTH) ||
+          undefined,
       });
       addEvent(created);
       closeReportModal();
@@ -84,16 +87,25 @@ export function ReportModal() {
               htmlFor="desc"
               className="block font-mono text-sm font-medium text-zinc-800 dark:text-zinc-200"
             >
-              Description (optional)
+              Description (optional, max {EVENT_DESCRIPTION_MAX_LENGTH}{" "}
+              characters)
             </label>
             <textarea
               id="desc"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) =>
+                setDescription(
+                  e.target.value.slice(0, EVENT_DESCRIPTION_MAX_LENGTH)
+                )
+              }
+              maxLength={EVENT_DESCRIPTION_MAX_LENGTH}
               rows={2}
               className="mt-1.5 w-full rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 py-2 font-mono text-sm text-zinc-900 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] placeholder-zinc-400 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:shadow-[2px_2px_0px_rgba(0,0,0,0.25)]"
               placeholder="Brief description..."
             />
+            <p className="mt-1 font-mono text-xs text-zinc-500 dark:text-zinc-500">
+              {description.length}/{EVENT_DESCRIPTION_MAX_LENGTH}
+            </p>
           </div>
           {error && (
             <p className="font-mono text-sm text-red-600 dark:text-red-400">

@@ -1,4 +1,5 @@
 import mongoose, { Schema, model, models } from "mongoose";
+import { EVENT_DESCRIPTION_MAX_LENGTH } from "@/lib/eventDescription";
 
 const EVENT_TYPES = ["police"] as const;
 export type EventTypeDoc = (typeof EVENT_TYPES)[number];
@@ -24,6 +25,11 @@ const eventSchema = new Schema(
           message: "location.coordinates must be [lng, lat]",
         },
       },
+    },
+    description: {
+      type: String,
+      maxlength: EVENT_DESCRIPTION_MAX_LENGTH,
+      trim: true,
     },
     confirmations: { type: Number, default: 0 },
     rejections: { type: Number, default: 0 },
