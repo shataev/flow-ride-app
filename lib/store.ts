@@ -33,6 +33,10 @@ interface MapStore {
     preview: { lat: number; lng: number; placeLabel: string } | null
   ) => void;
 
+  /** After map click: zoom + pin with Add Event until confirmed or replaced. */
+  mapClickPreview: { lat: number; lng: number } | null;
+  setMapClickPreview: (preview: { lat: number; lng: number } | null) => void;
+
   /** Last known user location (for a map marker). */
   userLocation: { lat: number; lng: number } | null;
   setUserLocation: (loc: { lat: number; lng: number } | null) => void;
@@ -69,6 +73,9 @@ export const useMapStore = create<MapStore>((set) => ({
     })),
   searchPreview: null,
   setSearchPreview: (searchPreview) => set({ searchPreview }),
+
+  mapClickPreview: null,
+  setMapClickPreview: (mapClickPreview) => set({ mapClickPreview }),
 
   userLocation: null,
   setUserLocation: (userLocation) => set({ userLocation }),

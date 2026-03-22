@@ -16,6 +16,10 @@ import {
   type SearchSuggestion,
 } from "@/services/geocoding";
 import { useMapStore } from "@/lib/store";
+import {
+  EVENT_TYPE_ICON_PATHS,
+  EVENT_TYPE_ICON_RENDER_SIZE,
+} from "@/lib/eventTypeIcons";
 
 const MapViewDynamic = dynamic(
   () => import("@/components/map/MapView").then((m) => ({ default: m.MapView })),
@@ -54,6 +58,7 @@ function SearchBarOverlay() {
   const [sessionToken] = useState(() => uuidv4());
 
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
+  const setMapClickPreview = useMapStore((s) => s.setMapClickPreview);
 
   const onFocus = useCallback(() => {
     setOpen(true);
@@ -100,6 +105,7 @@ function SearchBarOverlay() {
       const placeLabel = addr
         ? `${suggestion.name}${addr !== suggestion.name ? ` — ${addr}` : ""}`
         : suggestion.name;
+      setMapClickPreview(null);
       setSearchPreview({
         lat: retrieved.center.lat,
         lng: retrieved.center.lng,
@@ -109,7 +115,7 @@ function SearchBarOverlay() {
       setResults([]);
       setOpen(false);
     },
-    [getMap, sessionToken, setSearchPreview]
+    [getMap, sessionToken, setSearchPreview, setMapClickPreview]
   );
 
   return (
@@ -151,7 +157,9 @@ function SearchBarOverlay() {
 function ReportFAB() {
   const { getMap } = useMapContext();
   const searchPreview = useMapStore((s) => s.searchPreview);
+  const mapClickPreview = useMapStore((s) => s.mapClickPreview);
   const setSearchPreview = useMapStore((s) => s.setSearchPreview);
+  const setMapClickPreview = useMapStore((s) => s.setMapClickPreview);
   const openReportModal = useMapStore((s) => s.openReportModal);
 
   const handleReportClick = useCallback(() => {
@@ -164,31 +172,69 @@ function ReportFAB() {
       setSearchPreview(null);
       return;
     }
+    if (mapClickPreview) {
+      openReportModal(mapClickPreview.lat, mapClickPreview.lng);
+      setMapClickPreview(null);
+      return;
+    }
     const map = getMap();
     if (map) {
       const c = map.getCenter();
       openReportModal(c.lat, c.lng);
     }
-  }, [searchPreview, openReportModal, setSearchPreview, getMap]);
+  }, [
+    searchPreview,
+    mapClickPreview,
+    openReportModal,
+    setSearchPreview,
+    setMapClickPreview,
+    getMap,
+  ]);
+
+  const policeIconPx = Math.round(EVENT_TYPE_ICON_RENDER_SIZE * 0.65);
 
   return (
     <div className="pointer-events-auto absolute bottom-6 right-4 z-10">
-      <FloatingButton
-        onClick={handleReportClick}
-        aria-label="Report event"
-        highlight={!!searchPreview}
-        icon={
+      {mapClickPreview ? (
+        <button
+          type="button"
+          onClick={handleReportClick}
+          aria-label="Add event at this location"
+          className={
+            "inline-flex h-12 max-w-[min(100vw-2rem,20rem)] shrink-0 items-center justify-center gap-1.5 rounded-[2px] border-2 border-zinc-200/90 bg-white px-3 text-sm font-semibold text-zinc-900 shadow-[4px_4px_0px_rgba(0,0,0,0.12)] transition-transform active:scale-95 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600/90 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900 " +
+            "ring-4 ring-blue-500 ring-offset-2 ring-offset-white animate-pulse dark:ring-offset-zinc-900"
+          }
+        >
+          <span className="whitespace-nowrap">Add</span>
           <img
-            src="/icons/png/add-event-alert.png"
+            src={EVENT_TYPE_ICON_PATHS.checkpoint}
             alt=""
             aria-hidden
-            width={32}
-            height={32}
+            width={policeIconPx}
+            height={policeIconPx}
             style={{ imageRendering: "pixelated" }}
-            className="h-8 w-8"
+            className="shrink-0"
           />
-        }
-      />
+          <span className="whitespace-nowrap">here</span>
+        </button>
+      ) : (
+        <FloatingButton
+          onClick={handleReportClick}
+          aria-label="Report event"
+          highlight={!!searchPreview}
+          icon={
+            <img
+              src="/icons/png/add-event-alert.png"
+              alt=""
+              aria-hidden
+              width={32}
+              height={32}
+              style={{ imageRendering: "pixelated" }}
+              className="h-8 w-8"
+            />
+          }
+        />
+      )}
     </div>
   );
 }
